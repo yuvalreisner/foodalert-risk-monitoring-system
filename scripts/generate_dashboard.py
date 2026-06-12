@@ -703,6 +703,15 @@ a{color:var(--israel);text-decoration:none} a:hover{text-decoration:underline}
 /* ── Layout ── */
 .container{max-width:1100px;margin:0 auto;padding:24px 16px}
 .section{margin-bottom:36px}
+
+/* ── Floating TOC ── */
+#floating-toc{position:fixed;left:18px;top:50%;transform:translateY(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.10);padding:10px 0;z-index:200;min-width:150px;max-width:172px;display:none}
+#floating-toc .toc-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:0 13px 8px;border-bottom:1px solid var(--border);margin-bottom:4px}
+#floating-toc ul{list-style:none;padding:0;margin:0}
+#floating-toc li a{display:flex;align-items:center;gap:6px;padding:5px 13px;font-size:12px;color:var(--muted);cursor:pointer;border-left:3px solid transparent;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+#floating-toc li a:hover{color:var(--text);background:#f5f7fa}
+#floating-toc li a.toc-active{color:var(--israel);font-weight:700;border-left-color:var(--israel);background:#eaf2fb}
+@media(min-width:1380px){#floating-toc{display:block}}
 .section-title{font-size:17px;font-weight:700;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
 .section-title .count{font-size:13px;font-weight:400;color:var(--muted);margin-left:4px}
 
@@ -814,10 +823,24 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
   </div>
 </div>
 
+<nav id="floating-toc">
+  <div class="toc-header">On This Page</div>
+  <ul>
+    <li><a onclick="tocScrollTo('toc-overview')"><span>📊</span> Overview</a></li>
+    <li><a onclick="tocScrollTo('toc-trends')"><span>📈</span> Alert Trends</a></li>
+    <li><a onclick="tocScrollTo('toc-israel')"><span>🇮🇱</span> Israel Watch</a></li>
+    <li><a onclick="tocScrollTo('toc-critical')"><span>🔴</span> Critical Alerts</a></li>
+    <li><a onclick="tocScrollTo('toc-high')"><span>🟠</span> High Alerts</a></li>
+    <li><a onclick="tocScrollTo('medium-section', true)"><span>🟡</span> Medium Alerts</a></li>
+    <li><a onclick="tocScrollTo('toc-breakdowns')"><span>📊</span> Data Sources</a></li>
+    <li><a onclick="tocScrollTo('toc-about')"><span>ℹ️</span> About</a></li>
+  </ul>
+</nav>
+
 <div class="container">
 
   <!-- OVERVIEW ROW: severity donut (left) + hazard donut (right) -->
-  <div class="overview-row" style="align-items:flex-start">
+  <div id="toc-overview" class="overview-row" style="align-items:flex-start">
 
     <!-- Left column -->
     <div style="display:flex;flex-direction:column;flex:1;min-width:0">
@@ -863,7 +886,7 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
   </div>
 
   <!-- SECTION 1: Trends -->
-  <div class="section">
+  <div id="toc-trends" class="section">
     <div class="section-title">📈 Alert Trends — Last 13 Months</div>
     <div class="trends-card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -894,13 +917,13 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
   </div>
 
   <!-- SECTION 2: Israel Watch -->
-  <div class="section">
+  <div id="toc-israel" class="section">
     <div class="section-title">🇮🇱 Israel Watch</div>
     <div id="israel-section"></div>
   </div>
 
   <!-- SECTION 3: Critical Alerts -->
-  <div class="section">
+  <div id="toc-critical" class="section">
     <div id="critical-section-anchor"></div>
     <div class="section-title">🔴 Critical Alerts <span class="count" id="critical-count"></span></div>
     <div id="critical-feed"></div>
@@ -908,7 +931,7 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
   </div>
 
   <!-- SECTION 4: High Alerts -->
-  <div class="section">
+  <div id="toc-high" class="section">
     <div class="section-title">🟠 High Alerts <span class="count" id="high-count"></span></div>
     <div id="high-feed"></div>
     <button class="show-more-btn" id="high-more-btn"></button>
@@ -925,7 +948,7 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
   </div>
 
   <!-- SECTION 4: Breakdowns -->
-  <div class="section">
+  <div id="toc-breakdowns" class="section">
     <div class="section-title">📊 Breakdowns <span class="count" id="breakdown-window"></span></div>
     <div class="charts-grid">
       <div class="chart-card" style="grid-column:1/-1">
@@ -969,7 +992,7 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
   </div>
 
   <!-- SECTION 5: About -->
-  <div class="section">
+  <div id="toc-about" class="section">
     <div class="section-title">ℹ️ About This Dashboard</div>
     <div class="about-grid">
       <div class="about-card">
@@ -1497,8 +1520,8 @@ function switchTrendBreakdown(mode){
       responsive:true, maintainAspectRatio:false,
       interaction:{mode:'index', intersect:false},
       scales:{
-        x:{ticks:{font:{size:14}}},
-        y:{beginAtZero:true, ticks:{font:{size:14}}}
+        x:{ticks:{font:{size:14}}, title:{display:true, text:'Month', color:'#5a6478', font:{size:12}}},
+        y:{beginAtZero:true, ticks:{font:{size:14}}, title:{display:true, text:'Number of Alerts', color:'#5a6478', font:{size:12}}}
       },
       plugins:{
         legend:{position:'bottom', align:'start', labels:{boxWidth:14, font:{size:14}}},
@@ -1570,7 +1593,10 @@ new Chart(document.getElementById('productChart'),{
   },
   options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:false},tooltip:pctTooltip(productTotal),datalabels:{display:false}},
-    scales:{x:{beginAtZero:true,ticks:{font:{size:14}}},y:{ticks:{font:{size:14},crossAlign:'far'}}}}
+    scales:{
+      x:{beginAtZero:true, ticks:{font:{size:14}}, title:{display:true, text:'Number of Alerts', color:'#5a6478', font:{size:12}}},
+      y:{ticks:{font:{size:14},crossAlign:'far'}, title:{display:true, text:'Product Category', color:'#5a6478', font:{size:12}}}
+    }}
 });
 
 // Country bar
@@ -1583,7 +1609,10 @@ new Chart(document.getElementById('countryChart'),{
   },
   options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:false},tooltip:pctTooltip(countryTotal),datalabels:{display:false}},
-    scales:{x:{beginAtZero:true,ticks:{font:{size:14}}},y:{ticks:{font:{size:14},crossAlign:'far'}}}}
+    scales:{
+      x:{beginAtZero:true, ticks:{font:{size:14}}, title:{display:true, text:'Number of Alerts', color:'#5a6478', font:{size:12}}},
+      y:{ticks:{font:{size:14},crossAlign:'far'}, title:{display:true, text:'Country', color:'#5a6478', font:{size:12}}}
+    }}
 });
 
 // Source doughnut
@@ -1625,6 +1654,55 @@ new Chart(document.getElementById('countryChart'),{
       }
     }
   });
+})();
+
+// ── Floating TOC ──────────────────────────────────────────────────
+(function(){
+  const TOC_SECTIONS = [
+    'toc-overview','toc-trends','toc-israel','toc-critical',
+    'toc-high','medium-section','toc-breakdowns','toc-about'
+  ];
+  const tocLinks = Array.from(document.querySelectorAll('#floating-toc li a'));
+
+  function tocScrollTo(id, toggleMed){
+    if(toggleMed){
+      const sec = document.getElementById('medium-section');
+      if(sec && getComputedStyle(sec).display === 'none') toggleMedium();
+    }
+    function doScroll(){
+      const el = document.getElementById(id);
+      if(!el) return;
+      const headerH = document.querySelector('.header').offsetHeight;
+      const top = el.getBoundingClientRect().top + window.scrollY - headerH - 16;
+      window.scrollTo({top, behavior:'smooth'});
+    }
+    // Wait one frame so display:block takes effect before measuring position
+    requestAnimationFrame(doScroll);
+  }
+  window.tocScrollTo = tocScrollTo;
+
+  // Scroll spy: highlight which section is currently in view
+  let currentActive = null;
+  function updateActive(){
+    const headerH = document.querySelector('.header').offsetHeight;
+    const scrollY = window.scrollY + headerH + 32;
+    let active = TOC_SECTIONS[0];
+    for(const id of TOC_SECTIONS){
+      const el = document.getElementById(id);
+      if(!el) continue;
+      if(getComputedStyle(el).display === 'none') continue;
+      if(el.getBoundingClientRect().top + window.scrollY <= scrollY) active = id;
+    }
+    if(active !== currentActive){
+      currentActive = active;
+      tocLinks.forEach((a, i) => {
+        const id = TOC_SECTIONS[i];
+        a.classList.toggle('toc-active', id === active);
+      });
+    }
+  }
+  window.addEventListener('scroll', updateActive, {passive:true});
+  updateActive();
 })();
 </script>
 </body>
