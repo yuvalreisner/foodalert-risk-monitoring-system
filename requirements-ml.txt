@@ -1,0 +1,7 @@
+# Steps 6-8 — Bi-Encoder training, scoring, ranking, counterfactuals
+# Install: python3 -m pip install -r requirements-ml.txt
+torch>=2.0
+transformers>=4.40
+accelerate>=0.30
+scipy>=1.10          # Spearman correlation in score_all_alerts.py
+scikit-learn>=1.3    # TF-IDF baseline in score_all_alerts.py

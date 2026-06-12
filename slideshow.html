@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FoodSafe Intelligence — סטטוס פרויקט</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-scale: 1;
+    --bg: #0b0f1a;
+    --bg-elev: #131a2b;
+    --bg-card: #1a233a;
+    --border: #2a3656;
+    --text: #e8ecf5;
+    --text-dim: #a8b3cf;
+    --accent-1: #5b8cff;
+    --accent-2: #a855f7;
+    --accent-grad: linear-gradient(135deg, #5b8cff 0%, #a855f7 100%);
+    --green: #10b981;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+  }
+  [data-theme="light"] {
+    --bg: #f7f8fc;
+    --bg-elev: #ffffff;
+    --bg-card: #ffffff;
+    --border: #e2e6ef;
+    --text: #1a1f2e;
+    --text-dim: #5a6478;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100vh; width: 100vw; overflow: hidden; }
+  body {
+    font-family: 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: calc(16px * var(--font-scale));
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  code, pre, .mono { font-family: 'JetBrains Mono', 'Menlo', 'Monaco', monospace; }
+
+  /* Top nav */
+  .topnav {
+    position: fixed; top: 0; left: 0; right: 0; height: 56px;
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    display: flex; align-items: center; padding: 0 20px;
+    gap: 12px;
+  }
+  .brand {
+    font-weight: 700; font-size: calc(15px * var(--font-scale));
+    background: var(--accent-grad);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-left: auto;
+  }
+  .navlinks {
+    display: flex; gap: 4px; flex: 1; overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .navlinks::-webkit-scrollbar { height: 4px; }
+  .navlinks::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .navlink {
+    padding: 6px 10px; border-radius: 6px;
+    cursor: pointer; font-size: calc(12px * var(--font-scale));
+    color: var(--text-dim); white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .navlink:hover { background: var(--bg-card); color: var(--text); }
+  .navlink.active {
+    background: var(--accent-grad);
+    color: white;
+  }
+
+  .controls { display: flex; gap: 6px; align-items: center; }
+  .ctrl-btn {
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text); padding: 4px 10px; border-radius: 6px;
+    cursor: pointer; font-size: calc(11px * var(--font-scale));
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .ctrl-btn:hover { border-color: var(--accent-1); }
+
+  /* Slides */
+  .slides-container {
+    margin-top: 56px;
+    height: calc(100vh - 56px - 36px);
+    width: 100%;
+    position: relative;
+  }
+  .slide {
+    position: absolute; inset: 0;
+    padding: 40px 60px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .slide.active { display: flex; animation: fade 0.4s ease-out; }
+  @keyframes fade {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Bottom bar */
+  .bottombar {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 36px;
+    background: var(--bg-elev); border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; font-size: calc(11px * var(--font-scale));
+    color: var(--text-dim); z-index: 100;
+  }
+  .progress {
+    height: 3px; background: var(--border); border-radius: 2px;
+    flex: 1; margin: 0 20px; overflow: hidden;
+  }
+  .progress-bar { height: 100%; background: var(--accent-grad); transition: width 0.3s; }
+
+  /* Slide content patterns */
+  h1.title-main {
+    font-size: calc(56px * var(--font-scale)); font-weight: 900;
+    line-height: 1.1; margin-bottom: 16px;
+    background: var(--accent-grad);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  h1.slide-title {
+    font-size: calc(36px * var(--font-scale));
+    font-weight: 700; margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+  }
+  h2.section-title {
+    font-size: calc(20px * var(--font-scale));
+    font-weight: 600; margin-bottom: 12px;
+    color: var(--accent-1);
+  }
+  p.lead { font-size: calc(18px * var(--font-scale)); color: var(--text-dim); line-height: 1.6; }
+  .subtitle { font-size: calc(20px * var(--font-scale)); color: var(--text-dim); margin-bottom: 32px; }
+  ul.bullets { list-style: none; padding: 0; }
+  ul.bullets li {
+    padding: 10px 0 10px 24px; position: relative;
+    font-size: calc(16px * var(--font-scale)); line-height: 1.5;
+  }
+  ul.bullets li::before {
+    content: "◆"; position: absolute; right: 0;
+    color: var(--accent-2); font-size: 0.8em;
+  }
+
+  /* Cards */
+  .grid {
+    display: grid; gap: 16px; flex: 1;
+  }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+    transition: all 0.2s;
+  }
+  .card:hover { border-color: var(--accent-1); transform: translateY(-2px); }
+  .card-title { font-weight: 700; font-size: calc(16px * var(--font-scale)); margin-bottom: 8px; }
+  .card-body { color: var(--text-dim); font-size: calc(14px * var(--font-scale)); line-height: 1.5; }
+
+  .stage-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--accent-grad); color: white; font-weight: 700;
+    margin-left: 12px;
+  }
+
+  /* Tag / pill */
+  .tag {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: calc(11px * var(--font-scale)); font-weight: 500;
+    margin-left: 4px;
+  }
+  .tag-api { background: rgba(16, 185, 129, 0.15); color: var(--green); border: 1px solid var(--green); }
+  .tag-blocked { background: rgba(245, 158, 11, 0.15); color: var(--orange); border: 1px solid var(--orange); }
+  .tag-active { background: rgba(91, 140, 255, 0.15); color: var(--accent-1); border: 1px solid var(--accent-1); }
+  .tag-dim { background: var(--bg-card); color: var(--text-dim); border: 1px solid var(--border); }
+
+  /* Tables */
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: calc(14px * var(--font-scale));
+  }
+  th, td {
+    padding: 10px 12px; text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--bg-elev); color: var(--text-dim);
+    font-weight: 600; font-size: calc(12px * var(--font-scale));
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  td.num { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+
+  /* Code block */
+  pre.code {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 18px;
+    font-size: calc(13px * var(--font-scale)); line-height: 1.6;
+    overflow: auto; direction: ltr; text-align: left;
+    color: var(--text);
+  }
+  .code-comment { color: var(--text-dim); }
+  .code-keyword { color: var(--accent-2); }
+  .code-string { color: var(--green); }
+
+  /* Severity bars */
+  .bar-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 12px;
+  }
+  .bar-label { width: 90px; font-weight: 500; }
+  .bar-track {
+    flex: 1; height: 28px; background: var(--bg-elev);
+    border-radius: 6px; overflow: hidden; position: relative;
+  }
+  .bar-fill {
+    height: 100%; display: flex; align-items: center;
+    padding: 0 12px; color: white; font-weight: 600;
+    font-size: calc(13px * var(--font-scale));
+  }
+
+  /* Pipeline diagram */
+  .pipeline {
+    display: flex; align-items: stretch; gap: 0; margin: 32px 0;
+  }
+  .pipeline-step {
+    flex: 1; padding: 16px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; position: relative;
+    text-align: center;
+  }
+  .pipeline-step:not(:last-child) { margin-left: 12px; }
+  .pipeline-step:not(:first-child)::after {
+    content: "→"; position: absolute; left: -22px; top: 50%;
+    transform: translateY(-50%) scaleX(-1);
+    color: var(--accent-1); font-size: 24px; font-weight: 700;
+  }
+  .pipeline-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent-grad); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; margin: 0 auto 8px;
+  }
+
+  /* Stat */
+  .stat {
+    text-align: center; padding: 20px;
+  }
+  .stat-num {
+    font-size: calc(48px * var(--font-scale));
+    font-weight: 900; line-height: 1;
+    background: var(--accent-grad);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-label { color: var(--text-dim); margin-top: 8px; font-size: calc(13px * var(--font-scale)); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: none; align-items: center; justify-content: center;
+    z-index: 200; backdrop-filter: blur(4px);
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 32px; max-width: 700px; width: 90%;
+    max-height: 80vh; overflow: auto;
+  }
+  .modal h3 { margin-bottom: 16px; color: var(--accent-1); font-size: calc(22px * var(--font-scale)); }
+  .modal-close {
+    float: left; background: none; border: none; color: var(--text-dim);
+    font-size: 20px; cursor: pointer;
+  }
+
+  .clickable { cursor: pointer; }
+  .clickable:hover { box-shadow: 0 0 0 2px var(--accent-1); }
+
+  .label-en { font-family: 'JetBrains Mono', monospace; font-size: 0.9em; color: var(--text-dim); }
+  .row-flex { display: flex; gap: 24px; align-items: flex-start; }
+  .row-flex > * { flex: 1; }
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- ========== TOP NAV ========== -->
+<nav class="topnav">
+  <div class="navlinks" id="navlinks"></div>
+  <div class="controls">
+    <button class="ctrl-btn" onclick="setFontScale(0.85)">S</button>
+    <button class="ctrl-btn" onclick="setFontScale(1)">M</button>
+    <button class="ctrl-btn" onclick="setFontScale(1.15)">L</button>
+    <button class="ctrl-btn" onclick="toggleTheme()" id="themeBtn">☀</button>
+  </div>
+  <div class="brand">FoodSafe Intelligence</div>
+</nav>
+
+<!-- ========== SLIDES ========== -->
+<div class="slides-container" id="slides">
+
+  <!-- Slide 1: Title -->
+  <section class="slide active" data-name="פתיחה">
+    <div style="margin: auto; text-align: center;">
+      <div style="font-size: calc(14px * var(--font-scale)); color: var(--text-dim); letter-spacing: 0.2em; margin-bottom: 16px;">
+        MBA CAPSTONE · HEBREW UNIVERSITY · COURSE 55910
+      </div>
+      <h1 class="title-main">FoodSafe Intelligence</h1>
+      <div class="subtitle">כלי מודיעין גלוי לבטיחות מזון — סטטוס פרויקט</div>
+      <div style="margin-top: 40px; display: flex; gap: 32px; justify-content: center; flex-wrap: wrap;">
+        <div>
+          <div class="label-en">SPONSOR</div>
+          <div style="font-weight: 600; margin-top: 4px;">משרד הבריאות</div>
+          <div style="font-size: calc(13px * var(--font-scale)); color: var(--text-dim);">היחידה לניהול סיכונים במזון</div>
+        </div>
+        <div>
+          <div class="label-en">TEAM</div>
+          <div style="font-weight: 600; margin-top: 4px;">יובל · נוי · יובלי</div>
+        </div>
+        <div>
+          <div class="label-en">DATE</div>
+          <div style="font-weight: 600; margin-top: 4px;">מאי 2026</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 2: Agenda -->
+  <section class="slide" data-name="תוכן עניינים">
+    <h1 class="slide-title">תוכן עניינים</h1>
+    <div class="grid grid-2" style="gap: 12px;">
+      <div class="card clickable" onclick="goTo(2)">
+        <div class="card-title">1 · רקע ומוטיבציה</div>
+        <div class="card-body">למה הפרויקט הזה קיים, מי מבקש אותו, ומה השאלה העסקית.</div>
+      </div>
+      <div class="card clickable" onclick="goTo(3)">
+        <div class="card-title">2 · שאלת המחקר</div>
+        <div class="card-body">הניסוח הרשמי וההתפתחות שלו אחרי הפגישות.</div>
+      </div>
+      <div class="card clickable" onclick="goTo(4)">
+        <div class="card-title">3 · היקף הפרויקט</div>
+        <div class="card-body">מה כן בהיקף ומה הוצא ממנו במכוון.</div>
+      </div>
+      <div class="card clickable" onclick="goTo(5)">
+        <div class="card-title">4 · מתודולוגיית העבודה</div>
+        <div class="card-body">תוכנית 4 השלבים: דאטה, Bradley-Terry, ייצוג טקסט, Cross-Encoder.</div>
+      </div>
+      <div class="card clickable" onclick="goTo(6)">
+        <div class="card-title">5 · מקורות הנתונים</div>
+        <div class="card-body">3 מקורות API פעילים, וההיגיון מאחורי הבחירה.</div>
+      </div>
+      <div class="card clickable" onclick="goTo(7)">
+        <div class="card-title">6 · מנגנון הניקוד</div>
+        <div class="card-body">איך כל ריקול מקבל ציון סיכון בסוף התהליך.</div>
+      </div>
+      <div class="card clickable" onclick="goTo(8)">
+        <div class="card-title">7 · סטטוס דאטה</div>
+        <div class="card-body">מה יושב במאגר היום, ואיך נראית דגימת התיוג.</div>
+      </div>
+      <div class="card clickable" onclick="goTo(9)">
+        <div class="card-title">8 · השלבים הבאים</div>
+        <div class="card-body">מה נותר לבצע ובאיזה סדר.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 3: Background -->
+  <section class="slide" data-name="רקע">
+    <h1 class="slide-title">רקע ומוטיבציה</h1>
+    <div class="row-flex" style="flex: 1;">
+      <div>
+        <h2 class="section-title">המציאות הרגולטורית</h2>
+        <ul class="bullets">
+          <li>מערך רגולציה בריאות במשרד הבריאות אחראי על בטיחות המזון בישראל.</li>
+          <li>האיומים מגוונים — פתוגנים, כימיקלים, אלרגנים, מיקרו-פלסטיקים, שאריות חומרי הדברה.</li>
+          <li>הם יכולים להופיע בכל שלב בשרשרת האספקה — ייצור, יבוא, שינוע, שיווק.</li>
+          <li>אין משאבים בלתי מוגבלים. הקצאת מאמצי פיקוח חייבת להיות מבוססת מודיעין.</li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="section-title">ההזדמנות</h2>
+        <ul class="bullets">
+          <li>מידע ציבורי על ריקולים והתראות קיים ממקורות רגולטוריים בכל העולם.</li>
+          <li>הוא מפוזר בעשרות מקורות, בפורמטים שונים, ובעומסים גדולים שאדם לא יכול לסקור ידנית.</li>
+          <li>מודלים של שפה (LLMs) מאפשרים לסווג ולדרג את הזרם הזה אוטומטית.</li>
+          <li>זיהוי מוקדם = זמן תגובה קצר יותר למשרד הבריאות.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 4: Research Question -->
+  <section class="slide" data-name="שאלת המחקר">
+    <h1 class="slide-title">שאלת המחקר</h1>
+
+    <div class="card" style="margin-bottom: 20px;">
+      <h2 class="section-title">השאלה העסקית המקורית — מהבריף הרשמי</h2>
+      <p style="font-size: calc(17px * var(--font-scale)); line-height: 1.7; padding: 12px 16px; border-right: 4px solid var(--accent-1);">
+        כיצד ניתן לפתח מערכת מודיעין גלוי אוטומטית שתזהה במהירות ובדיוק איומי ביטחון מזון מתפתחים, ותספק לקובעי המדיניות במשרד הבריאות מידע עדכני ומעובד לקבלת החלטות מהירות?
+      </p>
+    </div>
+
+    <div class="card" style="border-color: var(--accent-2);">
+      <h2 class="section-title" style="color: var(--accent-2);">השאלה המעודכנת — אחרי פגישת 29.03.2026</h2>
+      <p style="font-size: calc(17px * var(--font-scale)); line-height: 1.7; padding: 12px 16px; border-right: 4px solid var(--accent-2);">
+        כיצד ניתן להשתמש במודלי שפה גדולים (LLMs) כדי לאסוף, לאחד, לסווג ולדרג מידע ממקורות הטרוגניים (אתרי רגולציה, חדשות), לצורך זיהוי אוטומטי של התראות (Alerts) בתחום בטיחות המזון במדינות מפותחות?
+      </p>
+    </div>
+
+    <div style="margin-top: auto; font-size: calc(13px * var(--font-scale)); color: var(--text-dim); text-align: center;">
+      ההתפתחות: צמצום הפלט מ-Alerts + Trends ל-Alerts בלבד, והדגשה של LLMs כליבה הטכנולוגית.
+    </div>
+  </section>
+
+  <!-- Slide 5: Scope -->
+  <section class="slide" data-name="היקף">
+    <h1 class="slide-title">היקף הפרויקט</h1>
+    <div class="row-flex" style="flex: 1;">
+      <div>
+        <h2 class="section-title" style="color: var(--green);">בתוך ההיקף</h2>
+        <ul class="bullets">
+          <li>פלט מסוג Alerts בלבד — אירועים רגישים לזמן.</li>
+          <li>ריקולים, התפרצויות מחלות, פעולות אכיפה.</li>
+          <li>מקורות רשמיים — רשויות רגולציה של ארה"ב, אירופה, האו"ם.</li>
+          <li>שדה רלוונטיות לישראל לכל רשומה.</li>
+          <li>Deduplication ו-record linkage בין מקורות.</li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="section-title" style="color: var(--orange);">מחוץ להיקף</h2>
+        <ul class="bullets">
+          <li>ניתוח Trends וצריכת מוצרים — הוצא במכוון.</li>
+          <li>רשתות חברתיות, האשטאגים, גוגל טרנדס.</li>
+          <li>אתרי חדשות לא רגולטוריים, בלוגים, אגרגטורים.</li>
+          <li>פילטר גיאוגרפי קשיח — הכיסוי נגזר מהמקורות.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="margin-top: 20px;">
+      <h2 class="section-title">הגדרת בטיחות מזון בפרויקט</h2>
+      <p>מזון בטוח: לא מקולקל, ללא זיהום כימי, ללא פתוגנים מיקרוביולוגיים (סלמונלה, ליסטריה, מיקרו-פלסטיקים).</p>
+    </div>
+  </section>
+
+  <!-- Slide 6: Methodology Overview -->
+  <section class="slide" data-name="מתודולוגיה">
+    <h1 class="slide-title">מתודולוגיית העבודה — 4 שלבים</h1>
+
+    <div class="pipeline">
+      <div class="pipeline-step">
+        <div class="pipeline-num">1</div>
+        <div style="font-weight: 700;">Data Pipeline</div>
+        <div style="font-size: calc(12px * var(--font-scale)); color: var(--text-dim); margin-top: 6px;">
+          איסוף מ-3 APIs, סכמה אחידה, dedup, דגימה סטרטיפית
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="pipeline-num">2</div>
+        <div style="font-weight: 700;">Bradley-Terry</div>
+        <div style="font-size: calc(12px * var(--font-scale)); color: var(--text-dim); margin-top: 6px;">
+          השוואות זוגיות על severity, likelihood, exposure
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="pipeline-num">3</div>
+        <div style="font-weight: 700;">Natural Template</div>
+        <div style="font-size: calc(12px * var(--font-scale)); color: var(--text-dim); margin-top: 6px;">
+          ייצוג טקסטואלי של מטא-דאטה לקריאת BERT
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="pipeline-num">4</div>
+        <div style="font-weight: 700;">Cross-Encoder</div>
+        <div style="font-size: calc(12px * var(--font-scale)); color: var(--text-dim); margin-top: 6px;">
+          BERT שמדרג זוגות ולומד סדר חשיבות
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top: 20px;">
+      <div class="card clickable" onclick="showModal('m-stage1')">
+        <div class="card-title">שלב 1 — מערכת הצינור</div>
+        <div class="card-body">3 קולקטורים, SQLite, dedup, sample של 100 בסטרטיפיקציה לפי severity. <span class="tag tag-active">לחץ לפרטים</span></div>
+      </div>
+      <div class="card clickable" onclick="showModal('m-stage2')">
+        <div class="card-title">שלב 2 — Bradley-Terry</div>
+        <div class="card-body">100 דוגמאות → C(100,2) = 4,950 השוואות. שלוש ריצות נפרדות, ממוצע משוקלל. <span class="tag tag-active">לחץ לפרטים</span></div>
+      </div>
+      <div class="card clickable" onclick="showModal('m-stage3')">
+        <div class="card-title">שלב 3 — Natural Template</div>
+        <div class="card-body">במקום XML, שילוב של מטא-דאטה בשפה טבעית. ב-BERT עובד הרבה יותר טוב. <span class="tag tag-active">לחץ לפרטים</span></div>
+      </div>
+      <div class="card clickable" onclick="showModal('m-stage4')">
+        <div class="card-title">שלב 4 — Cross-Encoder</div>
+        <div class="card-body">RoBERTa שמקבל זוג ומחזיר העדפה. עוקף את מגבלת ה-100 דוגמאות. <span class="tag tag-active">לחץ לפרטים</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 7: Sources -->
+  <section class="slide" data-name="מקורות">
+    <h1 class="slide-title">המקורות שבחרנו</h1>
+    <p class="lead" style="margin-bottom: 24px;">
+      שלושה מקורות עם API נקי, JSON, ללא אימות, יחידת רישום אחידה (ריקול אחד = שורה אחת).
+    </p>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <span class="tag tag-api">API</span>
+          <span class="tag tag-active">ארה"ב</span>
+        </div>
+        <div class="card-title">FDA Recall Enforcement Reports</div>
+        <div class="card-body" style="margin-top: 8px;">
+          ריקולים של מוצרי מזון בכל קטגוריה (חוץ מבשר). כ-28,774 רשומות היסטוריות. עדכון שבועי.
+        </div>
+        <div class="label-en" style="margin-top: 12px;">api.fda.gov/food/enforcement.json</div>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <span class="tag tag-api">API</span>
+          <span class="tag tag-active">ארה"ב</span>
+          <span class="tag tag-blocked">חסום</span>
+        </div>
+        <div class="card-title">USDA FSIS Recall API</div>
+        <div class="card-body" style="margin-top: 8px;">
+          ריקולים של בשר, עוף, ביצים. רכוב על Akamai — חסום מהרשת הנוכחית, ירוץ ממיקום אחר.
+        </div>
+        <div class="label-en" style="margin-top: 12px;">fsis.usda.gov/fsis/api/recall/v/1</div>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <span class="tag tag-api">API</span>
+          <span class="tag tag-active">בריטניה</span>
+        </div>
+        <div class="card-title">FSA UK Food Alerts API</div>
+        <div class="card-body" style="margin-top: 8px;">
+          התראות אלרגנים (AA), ריקולי מוצרים (PRIN), והתראות קריטיות (FAFA). מקור אירופי איכותי.
+        </div>
+        <div class="label-en" style="margin-top: 12px;">data.food.gov.uk/food-alerts</div>
+      </div>
+    </div>
+
+    <div class="card clickable" style="margin-top: 20px;" onclick="showModal('m-rejected')">
+      <div class="card-title">למה דווקא אלה? למה לא RASFF, INFOSAN, EFSA?</div>
+      <div class="card-body" style="margin-top: 4px;">
+        13 מקורות נוספים נסקרו והוצאו מההיקף ב-MVP. <span class="tag tag-active">לחץ לפירוט הסיבות</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 8: Scoring -->
+  <section class="slide" data-name="ניקוד">
+    <h1 class="slide-title">איך כל ריקול מקבל ניקוד</h1>
+
+    <div class="pipeline">
+      <div class="pipeline-step">
+        <div class="pipeline-num">1</div>
+        <div style="font-weight: 700;">תיוג זוגות</div>
+        <div style="font-size: calc(12px * var(--font-scale)); color: var(--text-dim); margin-top: 6px;">LLM מקבל זוג ושואל איזה מסוכן יותר</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="pipeline-num">2</div>
+        <div style="font-weight: 700;">3 BTs נפרדות</div>
+        <div style="font-size: calc(12px * var(--font-scale)); color: var(--text-dim); margin-top: 6px;">severity · likelihood · exposure</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="pipeline-num">3</div>
+        <div style="font-weight: 700;">ציון משוקלל</div>
+        <div style="font-size: calc(12px * var(--font-scale)); color: var(--text-dim); margin-top: 6px;">composite = 0.4·S + 0.3·L + 0.3·E</div>
+      </div>
+      <div class="pipeline-step">
+        <div class="pipeline-num">4</div>
+        <div style="font-weight: 700;">Cross-Encoder</div>
+        <div style="font-size: calc(12px * var(--font-scale)); color: var(--text-dim); margin-top: 6px;">לומד מהזוגות, מדרג ריקולים חדשים</div>
+      </div>
+    </div>
+
+    <div class="row-flex" style="margin-top: 20px;">
+      <div>
+        <h2 class="section-title">שלושת ממדי הסיכון</h2>
+        <ul class="bullets">
+          <li><b>חומרה (severity)</b> — כמה רע למי שנדבק או נפגע. Class I יותר חמור מ-Class III.</li>
+          <li><b>סבירות (likelihood)</b> — כמה סביר שמישהו אכן ייחשף ויינזק. תלוי באופן ההפצה.</li>
+          <li><b>חשיפה (exposure)</b> — כמה אנשים בסיכון. ריקול של אינסוף יחידות מסוכן יותר מאצווה אחת.</li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="section-title">ממוצע משוקלל</h2>
+        <pre class="code">composite_score =
+    0.4 × severity_score
+  + 0.3 × likelihood_score
+  + 0.3 × exposure_score</pre>
+        <p style="margin-top: 12px; color: var(--text-dim); font-size: calc(13px * var(--font-scale));">
+          המשקלים תואמים מסגרת FAO ו-WHO. ניתן לכייל אותם לפי המלצה של מומחי משרד הבריאות.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 9: Data Status -->
+  <section class="slide" data-name="סטטוס דאטה">
+    <h1 class="slide-title">סטטוס דאטה — מה יושב במאגר</h1>
+
+    <div class="grid grid-3" style="flex: none; margin-bottom: 24px;">
+      <div class="card stat">
+        <div class="stat-num">1,827</div>
+        <div class="stat-label">סה"כ רשומות במאגר</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-num">2</div>
+        <div class="stat-label">מקורות פעילים (FDA + FSA UK)</div>
+      </div>
+      <div class="card stat">
+        <div class="stat-num">100</div>
+        <div class="stat-label">דגימת תיוג סטרטיפית</div>
+      </div>
+    </div>
+
+    <div class="row-flex">
+      <div>
+        <h2 class="section-title">פיזור לפי מקור</h2>
+        <table>
+          <thead><tr><th>מקור</th><th>רשומות</th><th>תקופה</th></tr></thead>
+          <tbody>
+            <tr><td>FDA Enforcement</td><td class="num">1,500</td><td>2024-2026</td></tr>
+            <tr><td>FSA UK</td><td class="num">327</td><td>2024-2026</td></tr>
+            <tr><td>USDA FSIS</td><td class="num" style="color: var(--orange);">0</td><td>חסום מהרשת הנוכחית</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h2 class="section-title">הדגימה הסטרטיפית — labeling_v1</h2>
+        <div class="bar-row">
+          <div class="bar-label">High</div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 100%; background: var(--red);">34 (24 FDA + 10 FSA)</div>
+          </div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Medium</div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 97%; background: var(--orange);">33 (17 FDA + 16 FSA)</div>
+          </div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">Low</div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: 97%; background: var(--green);">33 (33 FDA, 0 FSA)</div>
+          </div>
+        </div>
+        <p style="margin-top: 12px; color: var(--text-dim); font-size: calc(12px * var(--font-scale));">
+          הערה: ה-FSA UK לא מסווג ריקולים כ-low. ה-stratum הזה מהווה 100% FDA — מודע ומקובל.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 10: Schema highlights -->
+  <section class="slide" data-name="הסכמה">
+    <h1 class="slide-title">הסכמה — Core של 25 עמודות</h1>
+    <p class="lead" style="margin-bottom: 16px;">
+      יחידת ניתוח: ריקול אחד = שורה אחת. כפילויות בין מקורות לא נמזגות אלא נקשרות דרך fingerprint.
+    </p>
+
+    <div class="grid grid-3" style="flex: 1; gap: 12px;">
+      <div class="card">
+        <div class="card-title" style="color: var(--accent-1);">Identity & Time</div>
+        <ul class="bullets" style="font-size: calc(13px * var(--font-scale));">
+          <li>id, source_id, source_record_id</li>
+          <li>fingerprint לdedup</li>
+          <li>event_initiation_date, event_status</li>
+          <li>ingestion_date, source_published_date</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--accent-2);">Geography & Firm</div>
+        <ul class="bullets" style="font-size: calc(13px * var(--font-scale));">
+          <li>origin_country, distribution_countries</li>
+          <li><b>israel_relevance_flag</b></li>
+          <li>recalling_firm, brand_names</li>
+          <li>record_url</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--green);">Hazard & Severity</div>
+        <ul class="bullets" style="font-size: calc(13px * var(--font-scale));">
+          <li>hazard_category, hazard_specific</li>
+          <li>severity_raw, severity_normalized</li>
+          <li>population_at_risk</li>
+          <li>illness_count_reported</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--orange);">Product</div>
+        <ul class="bullets" style="font-size: calc(13px * var(--font-scale));">
+          <li>product_description</li>
+          <li>product_category</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--blue);">Free Text</div>
+        <ul class="bullets" style="font-size: calc(13px * var(--font-scale));">
+          <li>title, description</li>
+          <li>reason_for_recall</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--text-dim);">Extension (עתידי)</div>
+        <ul class="bullets" style="font-size: calc(13px * var(--font-scale));">
+          <li>BT scores: severity / likelihood / exposure / composite</li>
+          <li>Classification: method, confidence</li>
+          <li>Workflow: review_status, notification_sent</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 11: Open Questions -->
+  <section class="slide" data-name="שאלות פתוחות">
+    <h1 class="slide-title">שאלות פתוחות וחוב טכני</h1>
+
+    <div class="grid grid-2" style="flex: 1; gap: 16px;">
+      <div class="card">
+        <div class="card-title">FSIS — חסימת רשת</div>
+        <div class="card-body">הקוד שלם, אבל לא נבדק על דאטה אמיתי בגלל חסימת Akamai. נצטרך להריץ ממיקום אחר (בית או מובייל הוטספוט).</div>
+        <div class="tag tag-blocked" style="margin-top: 10px;">תלוי תשתית</div>
+      </div>
+      <div class="card">
+        <div class="card-title">חילוץ hazard_category</div>
+        <div class="card-body">84% מהדגימה עדיין ללא קטגוריית סיכון. צריך להחליט: מילות מפתח, LLM, או היברידי.</div>
+        <div class="tag tag-active" style="margin-top: 10px;">החלטה</div>
+      </div>
+      <div class="card">
+        <div class="card-title">בחירת LLM לתיוג</div>
+        <div class="card-body">Claude Sonnet, Opus, GPT-4o? תקציב? הצורך הוא 14,850 שאילתות (4,950 × 3 ממדים).</div>
+        <div class="tag tag-active" style="margin-top: 10px;">החלטה</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Active sampling של זוגות</div>
+        <div class="card-body">לא להשוות 4,950 זוגות באקראי. אסטרטגיית בחירה (זוגות דומים מאוד / הפוכים מאוד) עוד לא הוגדרה.</div>
+        <div class="tag tag-active" style="margin-top: 10px;">תכנון</div>
+      </div>
+      <div class="card">
+        <div class="card-title">אימות מומחים</div>
+        <div class="card-body">100-200 זוגות אסטרטגיים יישלחו למתן ולנגה. סוגי הזוגות והפורמט עוד לא הוגדרו.</div>
+        <div class="tag tag-active" style="margin-top: 10px;">תכנון</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Baseline להשוואה</div>
+        <div class="card-body">לפני אימון, צריך להריץ את הסיווג הקיים (rule-based) על 100 הדוגמאות כדי לדעת מה לעקוף.</div>
+        <div class="tag tag-active" style="margin-top: 10px;">חוב טכני</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 12: Next Steps -->
+  <section class="slide" data-name="השלבים הבאים">
+    <h1 class="slide-title">השלבים הבאים</h1>
+
+    <div class="row-flex" style="flex: 1;">
+      <div>
+        <h2 class="section-title" style="color: var(--green);">מיידי — לפני שלב 2</h2>
+        <ul class="bullets">
+          <li><b>Enrichment של hazard_category</b> על 1,827 הרשומות.</li>
+          <li><b>בחירת LLM ותקציב</b> לתיוג ההיברידי.</li>
+          <li><b>כתיבת prompt</b> שיתאים לשאילתות שלושת הממדים.</li>
+          <li><b>ניסוי active sampling</b> על 50 זוגות ראשונים.</li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="section-title" style="color: var(--accent-2);">בהמשך</h2>
+        <ul class="bullets">
+          <li>תיוג מלא של 4,950 זוגות × 3 ממדים.</li>
+          <li>אימות מומחים על 100-200 זוגות אסטרטגיים.</li>
+          <li>Fitting של שלוש BTs.</li>
+          <li>אימון Cross-Encoder.</li>
+          <li>הערכה מול בייסליין rule-based.</li>
+          <li>דשבורד ושליחת התראות.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px; background: linear-gradient(135deg, rgba(91,140,255,0.1) 0%, rgba(168,85,247,0.1) 100%); border-color: var(--accent-1);">
+      <div class="card-title">החלטה הקרובה ביותר</div>
+      <div class="card-body" style="font-size: calc(15px * var(--font-scale));">
+        איזה מהשלושה המיידיים נתחיל איתו? enrichment של hazard_category, בחירת LLM, או כתיבת ה-prompt?
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 13: Q&A -->
+  <section class="slide" data-name="שאלות">
+    <div style="margin: auto; text-align: center;">
+      <div style="font-size: calc(120px * var(--font-scale)); font-weight: 900; line-height: 1;
+                  background: var(--accent-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">?</div>
+      <h1 style="font-size: calc(48px * var(--font-scale)); margin-top: 24px;">שאלות?</h1>
+      <p class="lead" style="margin-top: 20px;">
+        לפני שאנחנו ממשיכים — הערות, חששות, או כיוונים שלא נסקרו?
+      </p>
+    </div>
+  </section>
+
+  <!-- Slide 14: End -->
+  <section class="slide" data-name="סיכום">
+    <h1 class="slide-title">סיכום</h1>
+    <div class="grid grid-2" style="flex: 1; gap: 16px;">
+      <div class="card">
+        <div class="card-title" style="color: var(--green);">מה הוקם</div>
+        <ul class="bullets">
+          <li>צינור איסוף מ-3 קולקטורים (2 פעילים, 1 ממתין)</li>
+          <li>SQLite עם סכמה אחידה של 25 עמודות</li>
+          <li>1,827 רשומות אמת במאגר</li>
+          <li>דגימה סטרטיפית של 100 לתיוג</li>
+          <li>תוכנית מתודולוגית 4-שלבית מאושרת</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color: var(--accent-1);">מה הלאה</div>
+        <ul class="bullets">
+          <li>Enrichment של קטגוריות סיכון</li>
+          <li>תיוג זוגות עם LLM (3 ממדים)</li>
+          <li>אימות מומחים</li>
+          <li>אימון Cross-Encoder</li>
+          <li>דשבורד ומערכת התראות</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top: 24px; text-align: center; color: var(--text-dim);">
+      <div style="font-size: calc(13px * var(--font-scale));">המסמך המרכזי המלא:</div>
+      <div class="label-en" style="margin-top: 6px;">PROJECT.md</div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ========== BOTTOM BAR ========== -->
+<div class="bottombar">
+  <span id="slideName">פתיחה</span>
+  <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+  <span><span id="curSlide">1</span> / <span id="totSlide">14</span></span>
+</div>
+
+<!-- ========== MODALS ========== -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="hideModal()">×</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+  const modals = {
+    'm-stage1': `
+      <h3>שלב 1 — Data Pipeline</h3>
+      <p style="line-height: 1.6;">בניית בסיס נתונים מאוחד מהמקורות הרשמיים.</p>
+      <ul class="bullets" style="margin-top: 12px;">
+        <li>3 קולקטורים נפרדים — אחד לכל מקור</li>
+        <li>סכמה אחידה ב-SQLite (25 עמודות)</li>
+        <li>Deduplication לפי fingerprint משולב (חברה + מוצר + מדינה)</li>
+        <li>Stratified sampling לפי severity_normalized — 33/33/34</li>
+        <li>Logging של כל ריצת ingestion</li>
+      </ul>
+    `,
+    'm-stage2': `
+      <h3>שלב 2 — Bradley-Terry על השוואות זוגיות</h3>
+      <p style="line-height: 1.6;">100 דוגמאות יוצרות C(100,2) = 4,950 זוגות אפשריים. אנו לא משווים את כולם — בוחרים תת-קבוצה אסטרטגית.</p>
+      <p style="margin-top: 12px; line-height: 1.6;">לכל זוג, ה-LLM שואל שלוש שאלות נפרדות:</p>
+      <ul class="bullets" style="margin-top: 8px;">
+        <li><b>severity</b> — איזה משניהם יותר חמור למי שנפגע?</li>
+        <li><b>likelihood</b> — איזה משניהם יותר סביר לפגוע באנשים?</li>
+        <li><b>exposure</b> — איזה משניהם פוגע ביותר אנשים?</li>
+      </ul>
+      <p style="margin-top: 12px; line-height: 1.6;">שלוש BTs נפרדות מתאימות נפרד, ומקבלות שלושה ציונים לכל ריקול. הציון הסופי הוא ממוצע משוקלל.</p>
+    `,
+    'm-stage3': `
+      <h3>שלב 3 — Natural Template במקום XML</h3>
+      <p style="line-height: 1.6;">המרצה הציע XML, אבל בדיקה מתודולוגית הראתה ש-natural template עובד טוב יותר עם BERT.</p>
+      <p style="margin-top: 12px; line-height: 1.6;"><b>הסיבות:</b></p>
+      <ul class="bullets" style="margin-top: 8px;">
+        <li>BERT אומן על שפה טבעית, לא על XML</li>
+        <li>תגיות XML מתבזבזות על טוקנים בלי משמעות סמנטית</li>
+        <li>חוסך טוקנים — חשוב במגבלת 512 של BERT</li>
+      </ul>
+      <p style="margin-top: 12px; line-height: 1.6;"><b>דוגמה לקלט שייכנס למודל:</b></p>
+      <pre class="code">Recall issued by Acme Foods Inc from
+United States for Cheddar cheese 200g blocks
+(category: Dairy). Hazard: Listeria
+monocytogenes (biological). FDA Class I.
+Distributed in USA, Canada, Mexico.</pre>
+    `,
+    'm-stage4': `
+      <h3>שלב 4 — Cross-Encoder</h3>
+      <p style="line-height: 1.6;">מודל BERT (RoBERTa או DistilBERT) שמקבל זוג אלרטים יחד ולומד לחזות איזה מסוכן יותר.</p>
+      <p style="margin-top: 12px; line-height: 1.6;"><b>למה Cross-Encoder ולא Regression?</b></p>
+      <ul class="bullets" style="margin-top: 8px;">
+        <li>BERT-as-regressor על 100 דוגמאות → overfitting</li>
+        <li>Cross-Encoder על 4,950 זוגות → גודל מדגם פי 50</li>
+        <li>הגישה תואמת את ההמלצה מפגישת 27.04.2026</li>
+      </ul>
+      <p style="margin-top: 12px; line-height: 1.6;"><b>פורמט הקלט:</b></p>
+      <pre class="code">[CLS] Alert A: Recall by Acme Foods... [SEP]
+Alert B: Recall by BetaCorp... [SEP]</pre>
+      <p style="margin-top: 12px; line-height: 1.6;">פלט: ציון של "כמה A מסוכן יותר מ-B".</p>
+    `,
+    'm-rejected': `
+      <h3>13 מקורות שהוצאו מההיקף ב-MVP</h3>
+      <p style="line-height: 1.6;">מתוך הרשימה המקורית של 16, רק 3 עומדים בקריטריונים של API נקי + יחידת רישום אחידה.</p>
+      <table style="margin-top: 16px;">
+        <thead><tr><th>מקור</th><th>סיבת הוצאה</th></tr></thead>
+        <tbody>
+          <tr><td>FDA Import Alerts</td><td>דורש OII auth key</td></tr>
+          <tr><td>FDA Safety Alerts</td><td>HTML בלבד</td></tr>
+          <tr><td>FDA CARES / CAERS</td><td>יחידה שונה (events לא recalls)</td></tr>
+          <tr><td>FDA CORE Outbreaks</td><td>HTML בלבד</td></tr>
+          <tr><td>RASFF Window</td><td>דורש EU Login</td></tr>
+          <tr><td>INFOSAN</td><td>קהילה סגורה, מייל בלבד</td></tr>
+          <tr><td>CDC outbreaks</td><td>RSS עם 21 רשומות בלבד</td></tr>
+          <tr><td>USDA outbreak inv.</td><td>HTML בלבד</td></tr>
+          <tr><td>WHO News</td><td>פיד חדשות, לא ריקולים</td></tr>
+          <tr><td>EFSA</td><td>publications מדעיים, לא ריקולים</td></tr>
+          <tr><td>EFSA Journal</td><td>publications מדעיים</td></tr>
+          <tr><td>US Federal Register</td><td>חקיקה, לא ריקולים</td></tr>
+          <tr><td>FDA Recalls page</td><td>חופף ל-Enforcement</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top: 16px; line-height: 1.6; color: var(--text-dim);">חלק יישקלו לשלב מאוחר יותר אחרי שה-MVP יוכח.</p>
+    `,
+  };
+
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  document.getElementById('totSlide').textContent = total;
+
+  // Build nav
+  const navlinks = document.getElementById('navlinks');
+  slides.forEach((s, i) => {
+    const link = document.createElement('div');
+    link.className = 'navlink' + (i === 0 ? ' active' : '');
+    link.textContent = `${i + 1}. ${s.dataset.name}`;
+    link.onclick = () => goTo(i);
+    navlinks.appendChild(link);
+  });
+
+  function goTo(idx) {
+    if (idx < 0 || idx >= total) return;
+    slides[current].classList.remove('active');
+    document.querySelectorAll('.navlink')[current].classList.remove('active');
+    current = idx;
+    slides[current].classList.add('active');
+    const navs = document.querySelectorAll('.navlink');
+    navs[current].classList.add('active');
+    navs[current].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    document.getElementById('curSlide').textContent = current + 1;
+    document.getElementById('slideName').textContent = slides[current].dataset.name;
+    document.getElementById('progressBar').style.width = ((current + 1) / total * 100) + '%';
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (document.getElementById('modal-overlay').classList.contains('show')) {
+      if (e.key === 'Escape') hideModal();
+      return;
+    }
+    if (e.key === 'ArrowLeft') goTo(current + 1);
+    else if (e.key === 'ArrowRight') goTo(current - 1);
+    else if (e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    else if (e.key === 'Home') goTo(0);
+    else if (e.key === 'End') goTo(total - 1);
+    else if (e.key >= '0' && e.key <= '9') {
+      const n = parseInt(e.key);
+      const target = n === 0 ? 9 : n - 1;
+      if (target < total) goTo(target);
+    }
+  });
+
+  function setFontScale(v) {
+    document.documentElement.style.setProperty('--font-scale', v);
+  }
+
+  function toggleTheme() {
+    const cur = document.body.dataset.theme;
+    document.body.dataset.theme = cur === 'dark' ? 'light' : 'dark';
+    document.getElementById('themeBtn').textContent = cur === 'dark' ? '🌙' : '☀';
+  }
+
+  function showModal(id) {
+    document.getElementById('modal-content').innerHTML = modals[id] || '';
+    document.getElementById('modal-overlay').classList.add('show');
+  }
+  function hideModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+  }
+  function closeModal(e) {
+    if (e.target === e.currentTarget) hideModal();
+  }
+
+  // initial
+  document.getElementById('progressBar').style.width = (1 / total * 100) + '%';
+</script>
+</body>
+</html>

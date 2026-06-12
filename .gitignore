@@ -1,0 +1,40 @@
+# Local extension packages (install via Cursor, do not commit)
+*.vsix
+
+# ML artifacts — model lives in GitHub Release, not in repo
+models/
+__pycache__/
+*.pt
+*.pyc
+
+# Large training/export data — not needed for daily pipeline
+data/exports/
+data/*.json
+data/alerts_full_backup.db
+
+# Generated reports (dashboard served from docs/index.html, not reports/)
+reports/dashboard_*.html
+reports/bt_scores_ranking.html
+reports/digest_*.html
+reports/digest_*.json
+reports/digest_test_*.html
+reports/digest_test_*.json
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+
+# Claude internal conversation data
+.claude/
+
+# Large one-off files
+foodsafe_intelligence.zip
+FoodSafe_Intelligence_Session_Summary.docx
+LLM_LABELING_CHAT_PASTE.md
+LLM_LABELING_PILOT10.md
+
+# Expert review output (internal validation)
+expert_review.html
+expert_review_2026-05-18.json

@@ -1,0 +1,155 @@
+"""FSA UK Food Alerts API collector.
+
+Endpoint: https://data.food.gov.uk/food-alerts/id
+Docs:     https://data.food.gov.uk/food-alerts/ui/reference
+
+Covers Allergy Alerts (AA), Product Recall Information Notices (PRIN),
+and Food Alerts for Action (FAFA).
+"""
+from __future__ import annotations
+import hashlib
+import json
+import re
+from datetime import datetime
+from typing import Iterator
+
+import requests
+
+from .base import BaseCollector
+
+ENDPOINT = "https://data.food.gov.uk/food-alerts/id"
+PAGE_SIZE = 200
+
+
+class FSAUKCollector(BaseCollector):
+    source_id = "fsa_uk"
+
+    def fetch_raw(self, since: datetime | None = None, limit: int | None = None) -> Iterator[dict]:
+        offset = 0
+        fetched = 0
+        while True:
+            params = {"_limit": PAGE_SIZE, "_offset": offset}
+            r = requests.get(ENDPOINT, params=params,
+                             headers={"Accept": "application/json"}, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+            items = data.get("items", [])
+            if not items:
+                return
+            for rec in items:
+                if since:
+                    created = _parse_iso_date(rec.get("created"))
+                    if created and created < since.strftime("%Y-%m-%d"):
+                        continue
+                yield rec
+                fetched += 1
+                if limit and fetched >= limit:
+                    return
+            if len(items) < PAGE_SIZE:
+                return
+            offset += PAGE_SIZE
+
+    def normalize(self, raw: dict) -> dict:
+        record_id = raw.get("notation", "")
+        alert_types = raw.get("type", []) or []
+        # The 'type' field is a list of URIs; extract short codes.
+        type_codes = [t.rsplit("/", 1)[-1] for t in alert_types if isinstance(t, str)]
+        is_prin = "PRIN" in type_codes
+        is_aa = "AA" in type_codes
+        is_fafa = "FAFA" in type_codes
+
+        firm = (raw.get("reportingBusiness") or {}).get("commonName")
+        problems = raw.get("problem", []) or []
+        product_details = raw.get("productDetails", []) or []
+
+        risk_statement = "; ".join(p.get("riskStatement", "") for p in problems if p.get("riskStatement"))
+        product_names = [p.get("productName", "") for p in product_details if p.get("productName")]
+        product_text = "; ".join(product_names)
+
+        # FSA UK does not expose FDA-style severity; we map alert type heuristically.
+        if is_fafa:
+            severity = "high"
+        elif is_prin:
+            severity = "medium"
+        elif is_aa:
+            severity = "medium"  # Allergy alerts are serious for affected individuals.
+        else:
+            severity = None
+
+        return {
+            "id": f"fsa_uk::{record_id}",
+            "source_id": self.source_id,
+            "source_record_id": record_id,
+            "fingerprint": _make_fingerprint(firm, product_text, "United Kingdom"),
+            "record_url": raw.get("alertURL") or raw.get("@id"),
+            "ingestion_date": datetime.utcnow().isoformat(timespec="seconds"),
+            "source_published_date": _parse_iso_date(raw.get("created")),
+            "event_initiation_date": _parse_iso_date(raw.get("created")),
+            "event_status": (raw.get("status") or {}).get("label", "").lower() or None,
+            "origin_country": "United Kingdom",
+            "distribution_countries": json.dumps(["United Kingdom"]),
+            "israel_relevance_flag": 1 if "israel" in json.dumps(raw, default=str).lower() else 0,
+            "recalling_firm": firm,
+            "brand_names": json.dumps(product_names[:5]),
+            "product_description": product_text or None,
+            "product_category": None,
+            "hazard_category": _infer_hazard_category(type_codes, risk_statement),
+            "hazard_specific": _extract_hazard_specific(risk_statement),
+            "severity_raw": "/".join(type_codes) or None,
+            "severity_normalized": severity,
+            "population_at_risk": "allergic" if is_aa else None,
+            "illness_count_reported": None,
+            "title": raw.get("title") or raw.get("shortTitle"),
+            "description": risk_statement or None,
+            "reason_for_recall": risk_statement or None,
+        }
+
+
+def _parse_iso_date(s: str | None) -> str | None:
+    if not s:
+        return None
+    try:
+        # Handle both date-only and full timestamp formats.
+        return datetime.fromisoformat(s.replace("Z", "+00:00")).date().isoformat()
+    except ValueError:
+        return s[:10] if len(s) >= 10 else s
+
+
+def _infer_hazard_category(type_codes: list, risk_text: str) -> str | None:
+    if "AA" in type_codes:
+        return "allergen"
+    text = (risk_text or "").lower()
+    biological = ["salmonella", "listeria", "e. coli", "e.coli", "campylobacter",
+                  "norovirus", "clostridium", "bacterial", "pathogen", "mould", "mold"]
+    chemical = ["pesticide", "lead", "cadmium", "mercury", "arsenic", "aflatoxin",
+                "mycotoxin", "ethylene oxide", "chemical", "residue"]
+    physical = ["metal", "glass", "plastic piece", "foreign body", "fragment"]
+    for kw in biological:
+        if kw in text:
+            return "biological"
+    for kw in chemical:
+        if kw in text:
+            return "chemical"
+    for kw in physical:
+        if kw in text:
+            return "physical"
+    return None
+
+
+def _extract_hazard_specific(risk_text: str) -> str | None:
+    if not risk_text:
+        return None
+    text = risk_text.lower()
+    for hazard in ["salmonella", "listeria monocytogenes", "listeria", "e. coli",
+                   "campylobacter", "norovirus", "clostridium botulinum",
+                   "aflatoxin", "lead", "cadmium", "mercury", "ethylene oxide"]:
+        if hazard in text:
+            return hazard
+    return None
+
+
+def _make_fingerprint(firm: str | None, product: str | None, country: str | None) -> str:
+    text = " ".join([(firm or "").lower(), (product or "").lower()[:120], (country or "").lower()])
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return hashlib.md5(text.encode()).hexdigest()
