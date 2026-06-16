@@ -146,9 +146,14 @@ def send_email(api_key: str, subject: str, html: str) -> None:
         },
         method="POST",
     )
-    with urllib.request.urlopen(req) as resp:
-        body = resp.read().decode()
-        print(f"Email sent. Response: {body}")
+    try:
+        with urllib.request.urlopen(req) as resp:
+            body = resp.read().decode()
+            print(f"Email sent. Response: {body}")
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        print(f"Resend error {e.code}: {body}", file=sys.stderr)
+        raise
 
 
 def main() -> None:
