@@ -1798,7 +1798,7 @@ new Chart(document.getElementById('countryChart'),{
   function openAlertFromHash() {
     const hash = window.location.hash;
     if (!hash) return;
-    const el = document.querySelector(hash);
+    const el = document.getElementById(hash.slice(1));
     if (!el) return;
     const medSec = document.getElementById('medium-section');
     if (medSec && medSec.contains(el) && getComputedStyle(medSec).display === 'none') {
