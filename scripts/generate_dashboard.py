@@ -1794,8 +1794,7 @@ new Chart(document.getElementById('countryChart'),{
 })();
 
 // Deep-link: open and scroll to a specific alert via URL hash (#alert-xxx)
-(function() {
-  function openAlertFromHash() {
+function openAlertFromHash() {
     const hash = window.location.hash;
     if (!hash) return;
     const el = document.getElementById(hash.slice(1));
@@ -1950,7 +1949,6 @@ function exportCSV() {
 
   document.getElementById('export-status').textContent = `✓ Exported ${rows.length} alerts`;
 }
-})();
 </script>
 </body>
 </html>
