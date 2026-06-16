@@ -58,8 +58,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ── Daily pipeline ──────────────────────────────────────────────────────
-      - name: Ingest new alerts (last 2 days)
-        run: python3 scripts/ingest.py --days 2
+      - name: Ingest new alerts (last 14 days)
+        run: python3 scripts/ingest.py --days 14
 
       - name: Score new alerts
         run: python3 scripts/score_all_alerts.py
