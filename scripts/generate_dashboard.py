@@ -835,6 +835,35 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
     <li><a onclick="tocScrollTo('toc-breakdowns')"><span>📊</span> Data Sources</a></li>
     <li><a onclick="tocScrollTo('toc-about')"><span>ℹ️</span> About</a></li>
   </ul>
+  <div style="border-top:1px solid var(--border);margin:6px 0 4px"></div>
+  <div style="padding:6px 10px">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px">Export CSV</div>
+    <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
+      <input id="toc-export-days" type="number" value="30" min="1" max="365"
+        oninput="checkExportDays(this)"
+        style="width:46px;padding:3px 5px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:center">
+      <span style="font-size:11px;color:var(--muted)">days</span>
+    </div>
+    <div id="toc-days-warning" style="font-size:10px;color:#e67e22;display:none;margin-bottom:4px">
+      ⚠️ Max available: ${DATA.meta.window_days}d
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:7px;font-size:11px">
+      <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
+        <input id="toc-exp-crit" type="checkbox" checked> <span style="color:var(--critical)">●</span> Crit
+      </label>
+      <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
+        <input id="toc-exp-high" type="checkbox" checked> <span style="color:var(--high)">●</span> High
+      </label>
+      <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
+        <input id="toc-exp-med" type="checkbox"> <span style="color:var(--medium)">●</span> Med
+      </label>
+    </div>
+    <button onclick="tocExportCSV()"
+      style="width:100%;background:#1a1f2e;color:#fff;border:none;border-radius:6px;padding:6px 0;font-size:12px;font-weight:600;cursor:pointer">
+      ⬇ Download CSV
+    </button>
+    <div id="toc-export-status" style="font-size:10px;color:var(--muted);margin-top:4px;text-align:center"></div>
+  </div>
 </nav>
 
 <div class="container">
@@ -991,7 +1020,33 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
     </div>
   </div>
 
-  <!-- SECTION 5: About -->
+  <!-- SECTION 5: Export -->
+  <div class="section">
+    <div class="section-title">⬇️ Export Data</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <label style="font-size:14px;color:var(--text);font-weight:500">Last
+        <input id="export-days" type="number" value="30" min="1" max="365"
+          style="width:64px;margin:0 6px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:14px;text-align:center">
+        days
+      </label>
+      <label style="font-size:14px;color:var(--text);font-weight:500;display:flex;align-items:center;gap:6px">
+        <input id="export-critical" type="checkbox" checked> Critical
+      </label>
+      <label style="font-size:14px;color:var(--text);font-weight:500;display:flex;align-items:center;gap:6px">
+        <input id="export-high" type="checkbox" checked> High
+      </label>
+      <label style="font-size:14px;color:var(--text);font-weight:500;display:flex;align-items:center;gap:6px">
+        <input id="export-medium" type="checkbox"> Medium
+      </label>
+      <button onclick="exportCSV()"
+        style="background:#1a1f2e;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer;margin-left:auto">
+        ⬇️ Download CSV
+      </button>
+      <span id="export-status" style="font-size:12px;color:var(--muted)"></span>
+    </div>
+  </div>
+
+  <!-- SECTION 6: About -->
   <div id="toc-about" class="section">
     <div class="section-title">ℹ️ About This Dashboard</div>
     <div class="about-grid">
@@ -1186,9 +1241,9 @@ function renderCard(a, extraClass=''){
   return `<details class="alert-card ${a.tier} ${extraClass}" id="${cardId}">
   <summary>
     ${TIER_BADGE[a.tier]||''}
+    <span class="card-score" title="Absolute risk score 1–10 (min-max normalized from model output range −5.65 to +6.71)">${a.absolute_score.toFixed(1)}<span style="font-size:11px;font-weight:400;opacity:.6">/10</span></span>
     ${israelBadge}
     ${regionBadge}
-    <span class="card-score" title="Absolute risk score 1–10 (min-max normalized from model output range −5.65 to +6.71)">${a.absolute_score.toFixed(1)}<span style="font-size:11px;font-weight:400;opacity:.6">/10</span></span>
     <span class="card-title">${esc(a.title||a.alert_id)}</span>
     <span class="card-meta">${esc(a.source_published_date)}</span>
     <span class="expand-hint">▸</span>
@@ -1730,6 +1785,96 @@ new Chart(document.getElementById('countryChart'),{
     });
   }
   window.addEventListener('hashchange', openAlertFromHash);
+
+function checkExportDays(input) {
+  const val = parseInt(input.value);
+  const maxDays = DATA.meta.window_days;
+  const warn = document.getElementById('toc-days-warning');
+  if (val > maxDays) {
+    warn.textContent = `⚠️ Max available: ${maxDays}d`;
+    warn.style.display = 'block';
+    input.style.borderColor = '#e67e22';
+  } else {
+    warn.style.display = 'none';
+    input.style.borderColor = '';
+  }
+}
+
+function tocExportCSV() {
+  document.getElementById('export-days').value     = document.getElementById('toc-export-days').value;
+  document.getElementById('export-critical').checked = document.getElementById('toc-exp-crit').checked;
+  document.getElementById('export-high').checked     = document.getElementById('toc-exp-high').checked;
+  document.getElementById('export-medium').checked   = document.getElementById('toc-exp-med').checked;
+  exportCSV();
+  const status = document.getElementById('export-status').textContent;
+  document.getElementById('toc-export-status').textContent = status;
+}
+
+function exportCSV() {
+  const days     = parseInt(document.getElementById('export-days').value) || 30;
+  const wantCrit = document.getElementById('export-critical').checked;
+  const wantHigh = document.getElementById('export-high').checked;
+  const wantMed  = document.getElementById('export-medium').checked;
+
+  const cutoff = new Date(DATA.meta.ref_date);
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+
+  const tiers = new Set();
+  if (wantCrit) tiers.add('critical');
+  if (wantHigh) tiers.add('high');
+  if (wantMed)  tiers.add('medium');
+
+  const rows = DATA.alerts.filter(a =>
+    a.source_published_date >= cutoffStr && tiers.has(a.tier)
+  );
+
+  if (!rows.length) {
+    document.getElementById('export-status').textContent = 'No alerts found for selected filters.';
+    return;
+  }
+
+  const cols = [
+    'source_published_date','tier','absolute_score','title','source_id',
+    'hazard_specific','hazard_category','severity_normalized',
+    'origin_country','distribution_countries','israel_flag','record_url'
+  ];
+
+  const esc = v => {
+    if (v === null || v === undefined) return '';
+    const s = Array.isArray(v) ? v.join('; ') : String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\\n')
+      ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+
+  const lines = [cols.join(',')];
+  for (const a of rows) {
+    lines.push([
+      esc(a.source_published_date),
+      esc(a.tier),
+      esc(a.absolute_score ? a.absolute_score.toFixed(1) : ''),
+      esc(a.title || a.alert_id),
+      esc(a.source_id),
+      esc(a.hazard_specific),
+      esc(a.hazard_category),
+      esc(a.severity_normalized),
+      esc(a.origin_country),
+      esc(a.distribution_countries),
+      esc(a.israel_relevance_flag ? 'Yes' : ''),
+      esc(a.record_url),
+    ].join(','));
+  }
+
+  const blob = new Blob(['﻿' + lines.join('\n')], {type: 'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `foodsafe_alerts_${DATA.meta.ref_date}_last${days}d.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+
+  document.getElementById('export-status').textContent = `✓ Exported ${rows.length} alerts`;
+}
 })();
 </script>
 </body>
