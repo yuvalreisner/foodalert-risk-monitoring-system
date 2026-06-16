@@ -856,7 +856,7 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
       ⚠️ Max available: ${DATA.meta.window_days}d
     </div>
     <div style="position:relative;margin-bottom:7px">
-      <button id="tier-dd-btn" onclick="toggleTierDropdown()"
+      <button id="tier-dd-btn" onclick="toggleTierDropdown(event)"
         style="width:100%;display:flex;justify-content:space-between;align-items:center;
                padding:4px 8px;border:1px solid var(--border);border-radius:5px;
                background:#fff;font-size:11px;cursor:pointer;color:var(--text)">
@@ -1829,12 +1829,13 @@ function checkExportDays(input) {
   }
 }
 
-function toggleTierDropdown() {
+function toggleTierDropdown(e) {
+  e.stopPropagation();
   const panel = document.getElementById('tier-dd-panel');
   panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
 }
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('#tier-dd-btn') && !e.target.closest('#tier-dd-panel')) {
+  if (!e.target.closest('#tier-dd-panel')) {
     const p = document.getElementById('tier-dd-panel');
     if (p) p.style.display = 'none';
   }
