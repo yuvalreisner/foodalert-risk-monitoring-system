@@ -105,11 +105,30 @@ def main() -> None:
     model.to(device).eval()
 
     conn = db.connect()
-    rows = conn.execute(
-        "SELECT * FROM alerts ORDER BY source_published_date DESC"
-    ).fetchall()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS alert_scores (
+            alert_id               TEXT PRIMARY KEY,
+            bi_encoder_score       REAL,
+            bi_encoder_percentile  REAL,
+            severity_baseline      REAL,
+            tfidf_score            REAL,
+            scored_at              TEXT DEFAULT (datetime('now'))
+        )
+    """)
+    conn.commit()
+
+    rows = conn.execute("""
+        SELECT a.* FROM alerts a
+        LEFT JOIN alert_scores s ON s.alert_id = a.id
+        WHERE s.alert_id IS NULL
+        ORDER BY a.source_published_date DESC
+    """).fetchall()
     conn.close()
-    print(f"Loaded {len(rows)} alerts from DB")
+
+    if not rows:
+        print("All alerts already scored — nothing to do.")
+        return
+    print(f"Scoring {len(rows)} new alerts (already-scored alerts skipped)")
 
     texts = [render_alert_as_text(dict(r)) for r in rows]
 
@@ -145,12 +164,6 @@ def main() -> None:
         except ImportError:
             print("  scikit-learn not installed — skipping TF-IDF (use --no-tfidf to silence)")
 
-    # ── Percentile rank (global, over all 18k) ────────────────────────────
-    import numpy as np
-    arr   = np.array(raw_scores)
-    ranks = arr.argsort().argsort()
-    pct_ranks = (ranks / max(len(arr) - 1, 1)).tolist()
-
     # ── Correlations ──────────────────────────────────────────────────────
     try:
         from scipy.stats import spearmanr
@@ -164,9 +177,7 @@ def main() -> None:
 
     # ── Assemble results ──────────────────────────────────────────────────
     results = []
-    for r, score, pct, sev, tfidf in zip(
-        rows, raw_scores, pct_ranks, sev_scores, tfidf_scores
-    ):
+    for r, score, sev, tfidf in zip(rows, raw_scores, sev_scores, tfidf_scores):
         row = dict(r)
         results.append({
             "alert_id":              row["id"],
@@ -179,19 +190,17 @@ def main() -> None:
             "severity_normalized":   row.get("severity_normalized") or "",
             "distribution_countries": row.get("distribution_countries") or "",
             "bi_encoder_score":      round(score, 5),
-            "bi_encoder_percentile": round(pct, 4),
             "severity_baseline":     sev,
             "tfidf_score":           round(tfidf, 5),
         })
 
-    results.sort(key=lambda x: -x["bi_encoder_score"])
-
     # ── Top-10 preview ────────────────────────────────────────────────────
-    print("\nTop 10 alerts by Bi-Encoder score:")
-    for r in results[:10]:
+    top10 = sorted(results, key=lambda x: -x["bi_encoder_score"])[:10]
+    print(f"\nTop 10 new alerts by Bi-Encoder score:")
+    for r in top10:
         label = (r["title"] or r["product_description"])[:60]
         print(
-            f"  {r['bi_encoder_score']:+.4f}  pct={r['bi_encoder_percentile']:.2f}"
+            f"  {r['bi_encoder_score']:+.4f}"
             f"  {r['severity_raw']:12s}  {r['source_id']:20s}  {label}"
         )
 
@@ -213,32 +222,18 @@ def main() -> None:
 
     # ── Write to DB ───────────────────────────────────────────────────────
     conn = db.connect()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS alert_scores (
-            alert_id               TEXT PRIMARY KEY,
-            bi_encoder_score       REAL,
-            bi_encoder_percentile  REAL,
-            severity_baseline      REAL,
-            tfidf_score            REAL,
-            scored_at              TEXT DEFAULT (datetime('now'))
-        )
-    """)
-    conn.execute("DELETE FROM alert_scores")
     conn.executemany(
-        "INSERT INTO alert_scores "
-        "(alert_id, bi_encoder_score, bi_encoder_percentile, severity_baseline, tfidf_score) "
-        "VALUES (?, ?, ?, ?, ?)",
+        "INSERT OR IGNORE INTO alert_scores "
+        "(alert_id, bi_encoder_score, severity_baseline, tfidf_score) "
+        "VALUES (?, ?, ?, ?)",
         [
-            (
-                r["alert_id"], r["bi_encoder_score"], r["bi_encoder_percentile"],
-                r["severity_baseline"], r["tfidf_score"],
-            )
+            (r["alert_id"], r["bi_encoder_score"], r["severity_baseline"], r["tfidf_score"])
             for r in results
         ],
     )
     conn.commit()
     conn.close()
-    print(f"Written {len(results)} rows → alert_scores table in DB")
+    print(f"Inserted {len(results)} new scores → alert_scores table in DB")
 
 
 if __name__ == "__main__":
