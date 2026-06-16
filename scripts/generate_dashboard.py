@@ -429,8 +429,15 @@ def main() -> None:
     n_israel   = len(israel_raw)
     print(f"  Critical:{n_critical}  High:{n_high}  Medium:{n_medium}  Israel:{n_israel}")
 
-    # medium+ only for feed (keeps file size reasonable)
+    # medium+ for the visual feed; low tier embedded separately (slim fields, CSV-only)
     feed_alerts = [_clean_alert(a) for a in alerts_raw if a["tier"] != "low"]
+    CSV_FIELDS = ("alert_id","source_published_date","tier","absolute_score","title",
+                  "source_id","hazard_specific","hazard_category","severity_normalized",
+                  "origin_country","distribution_countries","israel_relevance_flag","record_url")
+    low_alerts = [
+        {k: _clean_alert(a).get(k) for k in CSV_FIELDS}
+        for a in alerts_raw if a["tier"] == "low"
+    ]
     israel_alerts = [_clean_alert(a) for a in israel_raw]
 
     # ── Query B: Israel fallback ───────────────────────────────────────────
@@ -633,6 +640,7 @@ def main() -> None:
         "israel_alerts":   israel_alerts,
         "israel_fallback": israel_fallback,
         "alerts":          feed_alerts,
+        "low_alerts":      low_alerts,
         "counterfactuals": cf_map,
         "trends":          trends,
         "trends_product":  trends_product,
@@ -847,16 +855,34 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
     <div id="toc-days-warning" style="font-size:10px;color:#e67e22;display:none;margin-bottom:4px">
       ⚠️ Max available: ${DATA.meta.window_days}d
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:7px;font-size:11px">
-      <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
-        <input id="toc-exp-crit" type="checkbox" checked> <span style="color:var(--critical)">●</span> Crit
-      </label>
-      <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
-        <input id="toc-exp-high" type="checkbox" checked> <span style="color:var(--high)">●</span> High
-      </label>
-      <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
-        <input id="toc-exp-med" type="checkbox"> <span style="color:var(--medium)">●</span> Med
-      </label>
+    <div style="position:relative;margin-bottom:7px">
+      <button id="tier-dd-btn" onclick="toggleTierDropdown()"
+        style="width:100%;display:flex;justify-content:space-between;align-items:center;
+               padding:4px 8px;border:1px solid var(--border);border-radius:5px;
+               background:#fff;font-size:11px;cursor:pointer;color:var(--text)">
+        <span id="tier-dd-label">Crit, High</span>
+        <span style="font-size:9px;color:var(--muted)">▾</span>
+      </button>
+      <div id="tier-dd-panel"
+        style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:200;
+               background:#fff;border:1px solid var(--border);border-radius:6px;
+               box-shadow:0 4px 12px rgba(0,0,0,.1);padding:6px 8px">
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;padding:2px 0;border-bottom:1px solid var(--border);margin-bottom:4px">
+          <input id="toc-exp-all" type="checkbox" onchange="tierAllChanged(this)"> All
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;padding:2px 0">
+          <input id="toc-exp-crit" type="checkbox" checked onchange="tierChanged()"> <span style="color:var(--critical)">●</span> Critical
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;padding:2px 0">
+          <input id="toc-exp-high" type="checkbox" checked onchange="tierChanged()"> <span style="color:var(--high)">●</span> High
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;padding:2px 0">
+          <input id="toc-exp-med" type="checkbox" onchange="tierChanged()"> <span style="color:var(--medium)">●</span> Medium
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;padding:2px 0">
+          <input id="toc-exp-low" type="checkbox" onchange="tierChanged()"> <span style="color:var(--muted)">●</span> Low
+        </label>
+      </div>
     </div>
     <button onclick="tocExportCSV()"
       style="width:100%;background:#1a1f2e;color:#fff;border:none;border-radius:6px;padding:6px 0;font-size:12px;font-weight:600;cursor:pointer">
@@ -1037,6 +1063,9 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
       </label>
       <label style="font-size:14px;color:var(--text);font-weight:500;display:flex;align-items:center;gap:6px">
         <input id="export-medium" type="checkbox"> Medium
+      </label>
+      <label style="font-size:14px;color:var(--text);font-weight:500;display:flex;align-items:center;gap:6px">
+        <input id="export-low" type="checkbox"> Low
       </label>
       <button onclick="exportCSV()"
         style="background:#1a1f2e;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer;margin-left:auto">
@@ -1800,11 +1829,48 @@ function checkExportDays(input) {
   }
 }
 
+function toggleTierDropdown() {
+  const panel = document.getElementById('tier-dd-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#tier-dd-btn') && !e.target.closest('#tier-dd-panel')) {
+    const p = document.getElementById('tier-dd-panel');
+    if (p) p.style.display = 'none';
+  }
+});
+function tierAllChanged(allBox) {
+  ['toc-exp-crit','toc-exp-high','toc-exp-med','toc-exp-low'].forEach(id => {
+    document.getElementById(id).checked = allBox.checked;
+  });
+  updateTierLabel();
+}
+function tierChanged() {
+  const ids = ['toc-exp-crit','toc-exp-high','toc-exp-med','toc-exp-low'];
+  const all = ids.every(id => document.getElementById(id).checked);
+  document.getElementById('toc-exp-all').checked = all;
+  updateTierLabel();
+}
+function updateTierLabel() {
+  const map = {
+    'toc-exp-crit': 'Crit', 'toc-exp-high': 'High',
+    'toc-exp-med': 'Med', 'toc-exp-low': 'Low'
+  };
+  const selected = Object.entries(map)
+    .filter(([id]) => document.getElementById(id).checked)
+    .map(([, label]) => label);
+  const lbl = document.getElementById('tier-dd-label');
+  if (!selected.length) lbl.textContent = 'None';
+  else if (selected.length === 4) lbl.textContent = 'All tiers';
+  else lbl.textContent = selected.join(', ');
+}
+
 function tocExportCSV() {
-  document.getElementById('export-days').value     = document.getElementById('toc-export-days').value;
+  document.getElementById('export-days').value       = document.getElementById('toc-export-days').value;
   document.getElementById('export-critical').checked = document.getElementById('toc-exp-crit').checked;
   document.getElementById('export-high').checked     = document.getElementById('toc-exp-high').checked;
   document.getElementById('export-medium').checked   = document.getElementById('toc-exp-med').checked;
+  document.getElementById('export-low').checked      = document.getElementById('toc-exp-low').checked;
   exportCSV();
   const status = document.getElementById('export-status').textContent;
   document.getElementById('toc-export-status').textContent = status;
@@ -1815,6 +1881,7 @@ function exportCSV() {
   const wantCrit = document.getElementById('export-critical').checked;
   const wantHigh = document.getElementById('export-high').checked;
   const wantMed  = document.getElementById('export-medium').checked;
+  const wantLow  = document.getElementById('export-low').checked;
 
   const cutoff = new Date(DATA.meta.ref_date);
   cutoff.setDate(cutoff.getDate() - days);
@@ -1824,9 +1891,16 @@ function exportCSV() {
   if (wantCrit) tiers.add('critical');
   if (wantHigh) tiers.add('high');
   if (wantMed)  tiers.add('medium');
+  if (wantLow)  tiers.add('low');
 
-  const rows = DATA.alerts.filter(a =>
+  const mainRows = DATA.alerts.filter(a =>
     a.source_published_date >= cutoffStr && tiers.has(a.tier)
+  );
+  const lowRows = wantLow
+    ? (DATA.low_alerts || []).filter(a => a.source_published_date >= cutoffStr)
+    : [];
+  const rows = [...mainRows, ...lowRows].sort((a, b) =>
+    (b.absolute_score || 0) - (a.absolute_score || 0)
   );
 
   if (!rows.length) {
