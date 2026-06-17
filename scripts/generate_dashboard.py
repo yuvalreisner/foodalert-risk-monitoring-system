@@ -1613,9 +1613,11 @@ function clearFilters() {
   _applyAll();
 }
 
-// Close dropdowns when clicking outside
+// Close dropdowns when clicking outside (but not when clicking inside a panel)
 document.addEventListener('click', () =>
   document.querySelectorAll('.ms-panel').forEach(p => p.classList.remove('open')));
+document.querySelectorAll('.ms-panel').forEach(p =>
+  p.addEventListener('click', e => e.stopPropagation()));
 
 function _applyAll() {
   const n = _filters.hazard.size + _filters.source.size + _filters.product.size + _filters.country.size;
