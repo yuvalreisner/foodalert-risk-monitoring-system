@@ -790,6 +790,18 @@ details.alert-card[open] summary{border-bottom:1px solid var(--border)}
 .sort-pill:hover{border-color:#aaa}
 .sort-pill.sort-active{background:var(--text);color:#fff;border-color:var(--text)}
 img.emoji{height:1em;width:1em;margin:0 .05em 0 .1em;vertical-align:-.1em;display:inline}
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:8px}
+.filter-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.filter-row:last-child{margin-bottom:0}
+.filter-label{font-size:11px;color:var(--muted);font-weight:600;min-width:56px;text-transform:uppercase;letter-spacing:.4px}
+.fc{cursor:pointer;background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:3px 11px;font-size:12px;color:var(--muted);transition:all .15s;white-space:nowrap}
+.fc:hover{border-color:#aaa}
+.fc.fca{background:var(--text);color:#fff;border-color:var(--text)}
+#filter-country-input{padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;width:190px;outline:none;color:var(--text)}
+#filter-country-input:focus{border-color:#888}
+#clear-filters-btn{background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:20px;padding:2px 10px;font-size:11px;cursor:pointer;transition:all .15s;display:none}
+#clear-filters-btn:hover{background:#e74c3c;color:#fff}
+#filter-badge{font-size:11px;color:#e67e22;font-weight:600;display:none}
 .show-more-btn{cursor:pointer;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:6px 14px;font-size:12px;color:var(--muted);display:block;margin:6px auto 14px;transition:background .15s}
 .show-more-btn:hover{background:var(--bg)}
 
@@ -984,9 +996,37 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
     <div id="israel-section"></div>
   </div>
 
-  <!-- Sort control -->
+  <!-- Filter bar -->
   <div id="critical-section-anchor"></div>
-  <div style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;padding:0 2px">
+  <div class="filter-bar">
+    <div class="filter-row">
+      <span class="filter-label">Hazard</span>
+      <button class="fc fca" data-f="hazard" data-v="" onclick="setFilter('hazard','')">All</button>
+      <button class="fc" data-f="hazard" data-v="biological"  onclick="setFilter('hazard','biological')">🦠 Biological</button>
+      <button class="fc" data-f="hazard" data-v="chemical"    onclick="setFilter('hazard','chemical')">⚗️ Chemical</button>
+      <button class="fc" data-f="hazard" data-v="allergen"    onclick="setFilter('hazard','allergen')">🌾 Allergen</button>
+      <button class="fc" data-f="hazard" data-v="physical"    onclick="setFilter('hazard','physical')">🔩 Physical</button>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Source</span>
+      <button class="fc fca" data-f="source" data-v="" onclick="setFilter('source','')">All</button>
+      <button class="fc" data-f="source" data-v="rasff"           onclick="setFilter('source','rasff')">RASFF</button>
+      <button class="fc" data-f="source" data-v="fda_enforcement" onclick="setFilter('source','fda_enforcement')">FDA</button>
+      <button class="fc" data-f="source" data-v="fsis"            onclick="setFilter('source','fsis')">USDA FSIS</button>
+      <button class="fc" data-f="source" data-v="fsa_uk"          onclick="setFilter('source','fsa_uk')">FSA UK</button>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Country</span>
+      <input id="filter-country-input" type="text" placeholder="Origin country…"
+             list="country-datalist" oninput="setCountryFilter(this.value)">
+      <datalist id="country-datalist"></datalist>
+      <button id="clear-filters-btn" onclick="clearFilters()">× Clear filters</button>
+      <span id="filter-badge"></span>
+    </div>
+  </div>
+
+  <!-- Sort control -->
+  <div style="display:flex;align-items:center;gap:8px;margin:4px 0 4px;padding:0 2px">
     <span style="font-size:12px;color:var(--muted)">Sort by:</span>
     <button id="sort-score-btn" class="sort-pill sort-active" onclick="setSortBy('score')">Score</button>
     <button id="sort-date-btn"  class="sort-pill"             onclick="setSortBy('date')">Date</button>
@@ -1450,9 +1490,69 @@ function scrollToTierById(id, toggleMed){
 // ── Alert Feed ────────────────────────────────────────────────────────────
 const INITIAL_SHOW = 10;
 
-// Sort state — shared across all tier sections
+// Sort + filter state
 let _sortMode = 'score';
 const _feedAlerts = {};
+const _charts = {};
+const _filters = { hazard: '', source: '', country: '' };
+
+function _passesFilters(a) {
+  if (_filters.hazard) {
+    if ((a.hazard_category || '').toLowerCase() !== _filters.hazard) return false;
+  }
+  if (_filters.source && a.source_id !== _filters.source) return false;
+  if (_filters.country) {
+    const q = _filters.country.toLowerCase();
+    const origin = (a.origin_country || '').toLowerCase();
+    const dist = (Array.isArray(a.distribution_countries)
+      ? a.distribution_countries.join(' ')
+      : String(a.distribution_countries || '')).toLowerCase();
+    if (!origin.includes(q) && !dist.includes(q)) return false;
+  }
+  return true;
+}
+
+function setFilter(type, value) {
+  _filters[type] = value;
+  document.querySelectorAll(`.fc[data-f="${type}"]`).forEach(el =>
+    el.classList.toggle('fca', el.dataset.v === value));
+  _applyAll();
+}
+
+function setCountryFilter(val) {
+  _filters.country = val.trim();
+  _applyAll();
+}
+
+function clearFilters() {
+  _filters.hazard = '';
+  _filters.source = '';
+  _filters.country = '';
+  document.getElementById('filter-country-input').value = '';
+  document.querySelectorAll('.fc').forEach(el =>
+    el.classList.toggle('fca', el.dataset.v === ''));
+  _applyAll();
+}
+
+function _applyAll() {
+  const n = [_filters.hazard, _filters.source, _filters.country].filter(Boolean).length;
+  const clearBtn = document.getElementById('clear-filters-btn');
+  const badge    = document.getElementById('filter-badge');
+  clearBtn.style.display = n ? 'inline-block' : 'none';
+  badge.textContent      = n ? `${n} filter${n>1?'s':''} active` : '';
+  badge.style.display    = n ? 'inline' : 'none';
+
+  _rerenderFeeds();
+
+  // Update section counts
+  document.getElementById('critical-count').textContent = _feedAlerts.critical.filter(_passesFilters).length;
+  document.getElementById('high-count').textContent     = _feedAlerts.high.filter(_passesFilters).length;
+  document.getElementById('medium-count').textContent   = _feedAlerts.medium.filter(_passesFilters).length;
+
+  // Update breakdown charts
+  const all = [..._feedAlerts.critical, ..._feedAlerts.high, ..._feedAlerts.medium].filter(_passesFilters);
+  _updateBreakdowns(all);
+}
 
 function _sortedAlerts(arr){
   const copy = [...arr];
@@ -1486,9 +1586,9 @@ function renderFeedSection(alerts, containerId, btnId, label){
 }
 
 function _rerenderFeeds(){
-  renderFeedSection(_sortedAlerts(_feedAlerts.critical), 'critical-feed', 'critical-more-btn', 'critical');
-  renderFeedSection(_sortedAlerts(_feedAlerts.high),     'high-feed',     'high-more-btn',     'high');
-  renderFeedSection(_sortedAlerts(_feedAlerts.medium),   'medium-feed',   'medium-more-btn',   'medium');
+  renderFeedSection(_sortedAlerts(_feedAlerts.critical.filter(_passesFilters)), 'critical-feed', 'critical-more-btn', 'critical');
+  renderFeedSection(_sortedAlerts(_feedAlerts.high.filter(_passesFilters)),     'high-feed',     'high-more-btn',     'high');
+  renderFeedSection(_sortedAlerts(_feedAlerts.medium.filter(_passesFilters)),   'medium-feed',   'medium-more-btn',   'medium');
 }
 
 function setSortBy(mode){
@@ -1511,6 +1611,14 @@ function setSortBy(mode){
 
   // After all cards are in the DOM, handle deep-link hash navigation
   if (window.location.hash) openAlertFromHash();
+
+  // Populate country autocomplete datalist
+  const _countries = [...new Set(
+    [..._feedAlerts.critical, ..._feedAlerts.high, ..._feedAlerts.medium]
+    .map(a => a.origin_country).filter(Boolean)
+  )].sort();
+  const _dl = document.getElementById('country-datalist');
+  _countries.forEach(c => { const o = document.createElement('option'); o.value = c; _dl.appendChild(o); });
 
   const medToggleBtn = document.getElementById('medium-toggle-btn');
   if(_feedAlerts.medium.length > 0){
@@ -1700,7 +1808,7 @@ function switchTrendBreakdown(mode){
     </div>`;
   }).join('');
 
-  new Chart(document.getElementById('hazardChart'),{
+  _charts.hazard = new Chart(document.getElementById('hazardChart'),{
     type:'doughnut',
     data:{
       labels,
@@ -1725,7 +1833,7 @@ function switchTrendBreakdown(mode){
 
 // Product bar
 const productTotal = DATA.breakdowns.product_category.data.reduce((s,v)=>s+v,0);
-new Chart(document.getElementById('productChart'),{
+_charts.product = new Chart(document.getElementById('productChart'),{
   type:'bar',
   data:{
     labels: DATA.breakdowns.product_category.labels,
@@ -1741,7 +1849,7 @@ new Chart(document.getElementById('productChart'),{
 
 // Country bar
 const countryTotal = DATA.breakdowns.origin_country.data.reduce((s,v)=>s+v,0);
-new Chart(document.getElementById('countryChart'),{
+_charts.country = new Chart(document.getElementById('countryChart'),{
   type:'bar',
   data:{
     labels: DATA.breakdowns.origin_country.labels,
@@ -1773,7 +1881,7 @@ new Chart(document.getElementById('countryChart'),{
     </div>`
   ).join('');
 
-  new Chart(document.getElementById('sourceChart'),{
+  _charts.source = new Chart(document.getElementById('sourceChart'),{
     type:'doughnut',
     data:{
       labels: sourceLabels,
@@ -1795,6 +1903,75 @@ new Chart(document.getElementById('countryChart'),{
     }
   });
 })();
+
+// ── Filter helpers ────────────────────────────────────────────────
+function _topN(arr, keyFn, n) {
+  const counts = {};
+  arr.forEach(a => { const k = keyFn(a) || 'unclassified'; counts[k] = (counts[k]||0)+1; });
+  return Object.entries(counts)
+    .sort((a,b) => b[1]-a[1])
+    .slice(0, n)
+    .reduce((acc,[k,v]) => { acc.labels.push(k); acc.data.push(v); return acc; },
+            {labels:[], data:[]});
+}
+
+function _updateBreakdowns(filtered) {
+  const HAZARD_COLORS = ['#c0392b','#8e44ad','#e67e22','#2980b9','#16a085','#7f8c8d','#bdc3c7'];
+  const SOURCE_COLORS = ['#003087','#007749','#9c1a1c','#f0b400'];
+
+  // Hazard doughnut
+  if (_charts.hazard) {
+    const hd = _topN(filtered, a => a.hazard_category, 10);
+    const hTotal = hd.data.reduce((s,v)=>s+v,0);
+    _charts.hazard.data.labels = hd.labels;
+    _charts.hazard.data.datasets[0].data = hd.data;
+    _charts.hazard.data.datasets[0].backgroundColor = HAZARD_COLORS.slice(0, hd.labels.length);
+    _charts.hazard.update();
+    document.getElementById('hazard-total').textContent = hTotal;
+    const legendEl = document.getElementById('hazard-legend');
+    if (legendEl) legendEl.innerHTML = hd.labels.map((lbl,i) =>
+      `<div class="ov-stat" style="cursor:default">
+        <div class="ov-dot" style="background:${HAZARD_COLORS[i%HAZARD_COLORS.length]}"></div>
+        <div class="ov-label" style="width:90px;text-transform:capitalize">${lbl}</div>
+        <div class="ov-val">${hd.data[i]}</div>
+      </div>`).join('');
+  }
+
+  // Product bar
+  if (_charts.product) {
+    const pd = _topN(filtered, a => a.product_category, 10);
+    _charts.product.data.labels = pd.labels;
+    _charts.product.data.datasets[0].data = pd.data;
+    _charts.product.update();
+  }
+
+  // Country bar
+  if (_charts.country) {
+    const cd = _topN(filtered, a => a.origin_country, 15);
+    _charts.country.data.labels = cd.labels;
+    _charts.country.data.datasets[0].data = cd.data;
+    _charts.country.update();
+  }
+
+  // Source doughnut
+  if (_charts.source) {
+    const sd = _topN(filtered, a => a.source_id, 10);
+    const sTotal = sd.data.reduce((s,v)=>s+v,0);
+    const srcLabels = sd.labels.map(l=>l.charAt(0).toUpperCase()+l.slice(1));
+    _charts.source.data.labels = srcLabels;
+    _charts.source.data.datasets[0].data = sd.data;
+    _charts.source.data.datasets[0].backgroundColor = SOURCE_COLORS.slice(0, sd.labels.length);
+    _charts.source.update();
+    document.getElementById('source-total').textContent = sTotal;
+    const legendEl = document.getElementById('source-legend');
+    if (legendEl) legendEl.innerHTML = srcLabels.map((lbl,i) =>
+      `<div class="ov-stat" style="cursor:default">
+        <div class="ov-dot" style="background:${SOURCE_COLORS[i%SOURCE_COLORS.length]}"></div>
+        <div class="ov-label" style="width:auto;flex:1;font-size:12px">${lbl}</div>
+        <div class="ov-val">${sd.data[i]}</div>
+      </div>`).join('');
+  }
+}
 
 // ── Floating TOC ──────────────────────────────────────────────────
 (function(){
