@@ -2059,6 +2059,10 @@ function _updateBreakdowns(filtered) {
     _charts.hazard.data.labels = hd.labels;
     _charts.hazard.data.datasets[0].data = hd.data;
     _charts.hazard.data.datasets[0].backgroundColor = HAZARD_COLORS.slice(0, hd.labels.length);
+    _charts.hazard.options.plugins.datalabels.formatter = v => {
+      const pct = hTotal ? Math.round(v/hTotal*100) : 0;
+      return pct >= 4 ? pct+'%' : '';
+    };
     _charts.hazard.update();
     document.getElementById('hazard-total').textContent = hTotal;
     const legendEl = document.getElementById('hazard-legend');
@@ -2100,6 +2104,10 @@ function _updateBreakdowns(filtered) {
     _charts.source.data.labels = srcLabels;
     _charts.source.data.datasets[0].data = sd.data;
     _charts.source.data.datasets[0].backgroundColor = SOURCE_COLORS.slice(0, sd.labels.length);
+    _charts.source.options.plugins.datalabels.formatter = v => {
+      const pct = sTotal ? Math.round(v/sTotal*100) : 0;
+      return pct >= 4 ? pct+'%' : '';
+    };
     _charts.source.update();
     document.getElementById('source-total').textContent = sTotal;
     const legendEl = document.getElementById('source-legend');
