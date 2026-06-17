@@ -791,23 +791,27 @@ details.alert-card[open] summary{border-bottom:1px solid var(--border)}
 .sort-pill.sort-active{background:var(--text);color:#fff;border-color:var(--text)}
 img.emoji{height:1em;width:1em;margin:0 .05em 0 .1em;vertical-align:-.1em;display:inline}
 /* ── Floating filters ── */
-#floating-filters{position:fixed;right:18px;top:18px;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.10);padding:0;z-index:200;width:200px;display:none}
+#floating-filters{position:fixed;right:18px;top:80px;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.10);padding:0;z-index:90;width:210px;display:none}
 #floating-filters .ff-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-#floating-filters .ff-body{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+#floating-filters .ff-body{padding:8px 10px;display:flex;flex-direction:column;gap:7px}
 @media(min-width:1280px){#floating-filters{display:block}}
-.filter-row{display:flex;flex-direction:column;gap:4px}
-.filter-label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
-.fc{cursor:pointer;background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:2px 9px;font-size:11px;color:var(--muted);transition:all .15s;white-space:nowrap}
-.fc:hover{border-color:#aaa}
-.fc.fca{background:var(--text);color:#fff;border-color:var(--text)}
-.fc-row{display:flex;flex-wrap:wrap;gap:4px}
-#filter-country-input{padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;font-size:11px;width:100%;box-sizing:border-box;outline:none;color:var(--text)}
-#filter-country-input:focus{border-color:#888}
-#filter-product-select{padding:3px 8px;border:1.5px solid var(--border);border-radius:20px;font-size:11px;color:var(--text);background:#fff;cursor:pointer;outline:none;width:100%;box-sizing:border-box}
-#filter-product-select:focus{border-color:#888}
-#clear-filters-btn{background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:20px;padding:2px 10px;font-size:11px;cursor:pointer;transition:all .15s;display:none;width:100%}
+/* multi-select dropdown */
+.ms-wrap{position:relative}
+.ms-btn{width:100%;display:flex;justify-content:space-between;align-items:center;padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;background:#fff;font-size:11px;color:var(--text);cursor:pointer;text-align:left;gap:4px}
+.ms-btn:hover{border-color:#aaa}
+.ms-btn.ms-active{border-color:var(--text);background:#f0f2f5}
+.ms-btn .ms-arrow{color:var(--muted);font-size:9px;flex-shrink:0}
+.ms-panel{display:none;position:absolute;right:0;top:calc(100% + 3px);width:100%;background:#fff;border:1.5px solid var(--border);border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.12);z-index:300;max-height:200px;overflow-y:auto}
+.ms-panel.open{display:block}
+.ms-item{display:flex;align-items:center;gap:7px;padding:5px 10px;font-size:11px;color:var(--text);cursor:pointer;user-select:none}
+.ms-item:hover{background:#f5f7fa}
+.ms-item input[type=checkbox]{margin:0;cursor:pointer;accent-color:var(--text)}
+.ms-sep{border:none;border-top:1px solid var(--border);margin:2px 0}
+.ms-country-input{width:100%;box-sizing:border-box;padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:11px;color:var(--text);outline:none}
+.ms-country-input:focus{border-color:#888}
+#clear-filters-btn{background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;transition:all .15s;display:none;width:100%}
 #clear-filters-btn:hover{background:#e74c3c;color:#fff}
-#filter-badge{font-size:11px;color:#e67e22;font-weight:600;display:none}
+#filter-badge{font-size:10px;background:#e74c3c;color:#fff;border-radius:10px;padding:1px 6px;display:none}
 .show-more-btn{cursor:pointer;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:6px 14px;font-size:12px;color:var(--muted);display:block;margin:6px auto 14px;transition:background .15s}
 .show-more-btn:hover{background:var(--bg)}
 
@@ -859,39 +863,54 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
 <div id="floating-filters">
   <div class="ff-header">
     <span>Filters</span>
-    <span id="filter-badge" style="font-size:10px;background:#e74c3c;color:#fff;border-radius:10px;padding:1px 6px;display:none"></span>
+    <span id="filter-badge"></span>
   </div>
   <div class="ff-body">
-    <div class="filter-row">
-      <span class="filter-label">Hazard</span>
-      <div class="fc-row">
-        <button class="fc fca" data-f="hazard" data-v="" onclick="setFilter('hazard','')">All</button>
-        <button class="fc" data-f="hazard" data-v="biological"  onclick="setFilter('hazard','biological')">🦠 Bio</button>
-        <button class="fc" data-f="hazard" data-v="chemical"    onclick="setFilter('hazard','chemical')">⚗️ Chem</button>
-        <button class="fc" data-f="hazard" data-v="allergen"    onclick="setFilter('hazard','allergen')">🌾 Allergen</button>
-        <button class="fc" data-f="hazard" data-v="physical"    onclick="setFilter('hazard','physical')">🔩 Physical</button>
+    <!-- Hazard dropdown -->
+    <div class="ms-wrap" id="ms-wrap-hazard">
+      <button class="ms-btn" id="ms-btn-hazard" onclick="toggleMsPanel('hazard',event)">
+        <span id="ms-lbl-hazard">Hazard: All</span><span class="ms-arrow">▾</span>
+      </button>
+      <div class="ms-panel" id="msp-hazard">
+        <label class="ms-item"><input type="checkbox" id="ms-all-hazard" checked onchange="toggleMsAll('hazard',this)"> All</label>
+        <hr class="ms-sep">
+        <label class="ms-item"><input type="checkbox" class="ms-opt" data-t="hazard" value="biological" onchange="toggleMsOption('hazard',this)"> 🦠 Biological</label>
+        <label class="ms-item"><input type="checkbox" class="ms-opt" data-t="hazard" value="chemical"   onchange="toggleMsOption('hazard',this)"> ⚗️ Chemical</label>
+        <label class="ms-item"><input type="checkbox" class="ms-opt" data-t="hazard" value="allergen"   onchange="toggleMsOption('hazard',this)"> 🌾 Allergen</label>
+        <label class="ms-item"><input type="checkbox" class="ms-opt" data-t="hazard" value="physical"   onchange="toggleMsOption('hazard',this)"> 🔩 Physical</label>
       </div>
     </div>
-    <div class="filter-row">
-      <span class="filter-label">Source</span>
-      <div class="fc-row">
-        <button class="fc fca" data-f="source" data-v="" onclick="setFilter('source','')">All</button>
-        <button class="fc" data-f="source" data-v="rasff"           onclick="setFilter('source','rasff')">RASFF</button>
-        <button class="fc" data-f="source" data-v="fda_enforcement" onclick="setFilter('source','fda_enforcement')">FDA</button>
-        <button class="fc" data-f="source" data-v="fsis"            onclick="setFilter('source','fsis')">USDA FSIS</button>
-        <button class="fc" data-f="source" data-v="fsa_uk"          onclick="setFilter('source','fsa_uk')">FSA UK</button>
+    <!-- Source dropdown -->
+    <div class="ms-wrap" id="ms-wrap-source">
+      <button class="ms-btn" id="ms-btn-source" onclick="toggleMsPanel('source',event)">
+        <span id="ms-lbl-source">Source: All</span><span class="ms-arrow">▾</span>
+      </button>
+      <div class="ms-panel" id="msp-source">
+        <label class="ms-item"><input type="checkbox" id="ms-all-source" checked onchange="toggleMsAll('source',this)"> All</label>
+        <hr class="ms-sep">
+        <label class="ms-item"><input type="checkbox" class="ms-opt" data-t="source" value="rasff"           onchange="toggleMsOption('source',this)"> RASFF</label>
+        <label class="ms-item"><input type="checkbox" class="ms-opt" data-t="source" value="fda_enforcement" onchange="toggleMsOption('source',this)"> FDA Enforcement</label>
+        <label class="ms-item"><input type="checkbox" class="ms-opt" data-t="source" value="fsis"            onchange="toggleMsOption('source',this)"> USDA FSIS</label>
+        <label class="ms-item"><input type="checkbox" class="ms-opt" data-t="source" value="fsa_uk"          onchange="toggleMsOption('source',this)"> FSA UK</label>
       </div>
     </div>
-    <div class="filter-row">
-      <span class="filter-label">Product</span>
-      <select id="filter-product-select" onchange="setProductFilter(this.value)">
-        <option value="">All categories</option>
-      </select>
+    <!-- Product dropdown (options populated by JS) -->
+    <div class="ms-wrap" id="ms-wrap-product">
+      <button class="ms-btn" id="ms-btn-product" onclick="toggleMsPanel('product',event)">
+        <span id="ms-lbl-product">Product: All</span><span class="ms-arrow">▾</span>
+      </button>
+      <div class="ms-panel" id="msp-product">
+        <label class="ms-item"><input type="checkbox" id="ms-all-product" checked onchange="toggleMsAll('product',this)"> All</label>
+        <hr class="ms-sep">
+        <!-- filled by JS -->
+      </div>
     </div>
-    <div class="filter-row">
-      <span class="filter-label">Country</span>
-      <input id="filter-country-input" type="text" placeholder="Origin country…"
-             list="country-datalist" oninput="setCountryFilter(this.value)">
+    <!-- Country text search -->
+    <div>
+      <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Country</div>
+      <input class="ms-country-input" id="filter-country-input" type="text"
+             placeholder="Origin country…" list="country-datalist"
+             oninput="setCountryFilter(this.value)">
       <datalist id="country-datalist"></datalist>
     </div>
     <button id="clear-filters-btn" onclick="clearFilters()">× Clear all filters</button>
@@ -1515,32 +1534,69 @@ const INITIAL_SHOW = 10;
 let _sortMode = 'score';
 const _feedAlerts = {};
 const _charts = {};
-const _filters = { hazard: '', source: '', country: '', product: '' };
+const _filters = { hazard: new Set(), source: new Set(), product: new Set(), country: '' };
 
 function _passesFilters(a) {
-  if (_filters.hazard) {
-    if ((a.hazard_category || '').toLowerCase() !== _filters.hazard) return false;
-  }
-  if (_filters.source && a.source_id !== _filters.source) return false;
-  if (_filters.product) {
-    if ((a.product_category || '').toLowerCase() !== _filters.product) return false;
-  }
+  if (_filters.hazard.size && !_filters.hazard.has((a.hazard_category||'').toLowerCase())) return false;
+  if (_filters.source.size && !_filters.source.has(a.source_id)) return false;
+  if (_filters.product.size && !_filters.product.has((a.product_category||'').toLowerCase())) return false;
   if (_filters.country) {
     const q = _filters.country.toLowerCase();
-    const origin = (a.origin_country || '').toLowerCase();
+    const origin = (a.origin_country||'').toLowerCase();
     const dist = (Array.isArray(a.distribution_countries)
       ? a.distribution_countries.join(' ')
-      : String(a.distribution_countries || '')).toLowerCase();
+      : String(a.distribution_countries||'')).toLowerCase();
     if (!origin.includes(q) && !dist.includes(q)) return false;
   }
   return true;
 }
 
-function setFilter(type, value) {
-  _filters[type] = value;
-  document.querySelectorAll(`.fc[data-f="${type}"]`).forEach(el =>
-    el.classList.toggle('fca', el.dataset.v === value));
+// ── Multi-select dropdown helpers ────────────────────────────────
+function toggleMsPanel(type, e) {
+  e && e.stopPropagation();
+  const panel = document.getElementById('msp-'+type);
+  const isOpen = panel.classList.contains('open');
+  document.querySelectorAll('.ms-panel').forEach(p => p.classList.remove('open'));
+  if (!isOpen) panel.classList.add('open');
+}
+
+function toggleMsOption(type, cb) {
+  const val = cb.value;
+  if (cb.checked) _filters[type].add(val); else _filters[type].delete(val);
+  const allCb = document.getElementById('ms-all-'+type);
+  const opts  = document.querySelectorAll(`#msp-${type} .ms-opt`);
+  allCb.checked = _filters[type].size === 0;
+  _updateMsLabel(type);
   _applyAll();
+}
+
+function toggleMsAll(type, cb) {
+  const opts = document.querySelectorAll(`#msp-${type} .ms-opt`);
+  if (cb.checked) {
+    // "All" checked → clear individual selections
+    _filters[type].clear();
+    opts.forEach(o => o.checked = false);
+  } else {
+    // "All" unchecked → select all individual options
+    opts.forEach(o => { o.checked = true; _filters[type].add(o.value); });
+  }
+  _updateMsLabel(type);
+  _applyAll();
+}
+
+function _updateMsLabel(type) {
+  const lbl = document.getElementById('ms-lbl-'+type);
+  const btn = document.getElementById('ms-btn-'+type);
+  if (!lbl) return;
+  const typeName = type.charAt(0).toUpperCase()+type.slice(1);
+  if (_filters[type].size === 0) {
+    lbl.textContent = typeName+': All';
+    btn.classList.remove('ms-active');
+  } else {
+    const names = [..._filters[type]].map(v=>v.charAt(0).toUpperCase()+v.slice(1));
+    lbl.textContent = names.length <= 2 ? typeName+': '+names.join(', ') : typeName+': '+names.length+' selected';
+    btn.classList.add('ms-active');
+  }
 }
 
 function setCountryFilter(val) {
@@ -1548,39 +1604,37 @@ function setCountryFilter(val) {
   _applyAll();
 }
 
-function setProductFilter(val) {
-  _filters.product = val;
+function clearFilters() {
+  ['hazard','source','product'].forEach(t => {
+    _filters[t].clear();
+    const allCb = document.getElementById('ms-all-'+t);
+    if (allCb) allCb.checked = true;
+    document.querySelectorAll(`#msp-${t} .ms-opt`).forEach(o => o.checked = false);
+    _updateMsLabel(t);
+  });
+  _filters.country = '';
+  document.getElementById('filter-country-input').value = '';
   _applyAll();
 }
 
-function clearFilters() {
-  _filters.hazard = '';
-  _filters.source = '';
-  _filters.country = '';
-  _filters.product = '';
-  document.getElementById('filter-country-input').value = '';
-  document.getElementById('filter-product-select').value = '';
-  document.querySelectorAll('.fc').forEach(el =>
-    el.classList.toggle('fca', el.dataset.v === ''));
-  _applyAll();
-}
+// Close dropdowns when clicking outside
+document.addEventListener('click', () =>
+  document.querySelectorAll('.ms-panel').forEach(p => p.classList.remove('open')));
 
 function _applyAll() {
-  const n = [_filters.hazard, _filters.source, _filters.country, _filters.product].filter(Boolean).length;
+  const n = _filters.hazard.size + _filters.source.size + _filters.product.size + (_filters.country ? 1 : 0);
   const clearBtn = document.getElementById('clear-filters-btn');
   const badge    = document.getElementById('filter-badge');
-  clearBtn.style.display = n ? 'inline-block' : 'none';
-  badge.textContent      = n ? `${n} filter${n>1?'s':''} active` : '';
+  clearBtn.style.display = n ? 'block' : 'none';
+  badge.textContent      = n ? `${n} active` : '';
   badge.style.display    = n ? 'inline' : 'none';
 
   _rerenderFeeds();
 
-  // Update section counts
   document.getElementById('critical-count').textContent = _feedAlerts.critical.filter(_passesFilters).length;
   document.getElementById('high-count').textContent     = _feedAlerts.high.filter(_passesFilters).length;
   document.getElementById('medium-count').textContent   = _feedAlerts.medium.filter(_passesFilters).length;
 
-  // Update breakdown charts
   const all = [..._feedAlerts.critical, ..._feedAlerts.high, ..._feedAlerts.medium].filter(_passesFilters);
   _updateBreakdowns(all);
 }
@@ -1649,16 +1703,27 @@ function setSortBy(mode){
   const _dl = document.getElementById('country-datalist');
   _countries.forEach(c => { const o = document.createElement('option'); o.value = c; _dl.appendChild(o); });
 
-  // Populate product category dropdown (sorted by frequency)
+  // Populate product category multi-select panel (sorted by frequency)
   const _prodCounts = {};
   _allFeedAlerts.forEach(a => { if (a.product_category) _prodCounts[a.product_category] = (_prodCounts[a.product_category]||0)+1; });
-  const _prodSel = document.getElementById('filter-product-select');
+  const _prodPanel = document.getElementById('msp-product');
   Object.entries(_prodCounts).sort((a,b)=>b[1]-a[1]).forEach(([cat]) => {
-    const o = document.createElement('option');
-    o.value = cat.toLowerCase();
-    o.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
-    _prodSel.appendChild(o);
+    const lbl = document.createElement('label');
+    lbl.className = 'ms-item';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.className = 'ms-opt'; cb.dataset.t = 'product';
+    cb.value = cat.toLowerCase();
+    cb.addEventListener('change', () => toggleMsOption('product', cb));
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(' ' + cat.charAt(0).toUpperCase() + cat.slice(1)));
+    _prodPanel.appendChild(lbl);
   });
+
+  // Position floating-filters below the sticky header
+  (function positionFilters(){
+    const hdr = document.querySelector('.header');
+    if(hdr) document.getElementById('floating-filters').style.top = (hdr.offsetHeight + 10) + 'px';
+  })();
 
   const medToggleBtn = document.getElementById('medium-toggle-btn');
   if(_feedAlerts.medium.length > 0){
