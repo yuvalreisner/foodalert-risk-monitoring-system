@@ -195,7 +195,10 @@ def _extract_hazard_from_text(text: str) -> tuple[str, str]:
     # Generic contamination phrase — extract what follows
     m = _CONTAMINATION_RE.search(t)
     if m:
-        extracted = next(g for g in m.groups() if g).strip().rstrip(".")
+        extracted = next((g for g in m.groups() if g), None)
+        if not extracted:
+            return "", ""
+        extracted = extracted.strip().rstrip(".")
         if extracted and len(extracted) < 60:
             sub_path = _PATHOGEN_RE.search(extracted)
             if sub_path:
@@ -1589,8 +1592,9 @@ let _trendChart = null;
 
 const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fmtMonth(lbl){ // "2025-05" → "May 25"
-  const [y,m] = lbl.split('-');
-  return MONTH_ABBR[parseInt(m)-1] + ' ' + y.slice(2);
+  const [y,m] = (lbl||'').split('-');
+  const idx = parseInt(m) - 1;
+  return (MONTH_ABBR[idx] || lbl) + ' ' + (y||'').slice(2);
 }
 
 function buildTrendDatasets(trendData){
@@ -1961,7 +1965,7 @@ function exportCSV() {
   const cols = [
     'source_published_date','tier','absolute_score','title','source_id',
     'hazard_specific','hazard_category','severity_normalized',
-    'origin_country','distribution_countries','israel_flag','record_url'
+    'origin_country','distribution_countries','israel_relevance_flag','record_url'
   ];
 
   const esc = v => {

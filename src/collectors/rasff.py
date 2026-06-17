@@ -14,9 +14,7 @@ import re
 from datetime import datetime
 from typing import Iterator
 
-import requests
-
-from .base import BaseCollector
+from .base import BaseCollector, make_retry_session
 
 SEARCH_URL = (
     "https://webgate.ec.europa.eu/rasff-window/backend/public"
@@ -57,7 +55,7 @@ class RASFFCollector(BaseCollector):
         page = 1
         fetched = 0
 
-        session = requests.Session()
+        session = make_retry_session()
         session.headers.update({"Accept": "application/json", "Content-Type": "application/json"})
 
         while True:
@@ -107,7 +105,8 @@ class RASFFCollector(BaseCollector):
 
         notifying = (raw.get("notifyingCountry") or {}).get("organizationName")
         origin_countries = [
-            c.get("organizationName", "") for c in (raw.get("originCountries") or []) if c
+            c.get("organizationName", "") for c in (raw.get("originCountries") or [])
+            if c and c.get("organizationName")
         ]
         origin_country = origin_countries[0] if origin_countries else notifying
 

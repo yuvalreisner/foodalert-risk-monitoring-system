@@ -4,6 +4,30 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Iterator
 
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+
+def make_retry_session(retries: int = 3, backoff: float = 1.5) -> requests.Session:
+    """Return a requests Session that automatically retries on transient errors.
+
+    Retries on: 429 (rate-limit), 500/502/503/504 (server errors).
+    Backoff: 1.5s, 3s, 6s between attempts.
+    """
+    session = requests.Session()
+    retry = Retry(
+        total=retries,
+        backoff_factor=backoff,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET", "POST"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
 
 class BaseCollector(ABC):
     """A collector pulls raw records from one source and yields normalized alert dicts."""

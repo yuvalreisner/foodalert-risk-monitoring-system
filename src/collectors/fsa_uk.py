@@ -13,9 +13,7 @@ import re
 from datetime import datetime
 from typing import Iterator
 
-import requests
-
-from .base import BaseCollector
+from .base import BaseCollector, make_retry_session
 
 ENDPOINT = "https://data.food.gov.uk/food-alerts/id"
 PAGE_SIZE = 200
@@ -27,10 +25,11 @@ class FSAUKCollector(BaseCollector):
     def fetch_raw(self, since: datetime | None = None, limit: int | None = None) -> Iterator[dict]:
         offset = 0
         fetched = 0
+        session = make_retry_session()
+        session.headers.update({"Accept": "application/json"})
         while True:
             params = {"_limit": PAGE_SIZE, "_offset": offset}
-            r = requests.get(ENDPOINT, params=params,
-                             headers={"Accept": "application/json"}, timeout=30)
+            r = session.get(ENDPOINT, params=params, timeout=30)
             r.raise_for_status()
             data = r.json()
             items = data.get("items", [])

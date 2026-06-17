@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -72,8 +73,6 @@ def build_html(alerts_to_send: list[tuple[dict, list[str]]], ref_date: str) -> s
         )
         reason_tags = " · ".join(reasons)
         url = alert.get("record_url") or ""
-        card_id = "alert-" + alert["id"].replace("::", "-").replace("/", "-").replace(" ", "-")
-        import re
         card_id = "alert-" + re.sub(r'[^a-zA-Z0-9]', '-', alert["id"])
         dashboard_link = f'{DASHBOARD_URL}#{card_id}'
         link = (
@@ -192,8 +191,6 @@ def main() -> None:
         print(f"No alerts found for {args.date} — nothing to send.")
         return
 
-    to_send = [(a, reasons) for a in alerts if (should_notify(a)[0]) for _, reasons in [should_notify(a)]]
-    # rebuild cleanly
     to_send = [(a, should_notify(a)[1]) for a in alerts if should_notify(a)[0]]
 
     if not to_send:

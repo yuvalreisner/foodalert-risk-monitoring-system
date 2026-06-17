@@ -10,9 +10,7 @@ import re
 from datetime import datetime
 from typing import Iterator
 
-import requests
-
-from .base import BaseCollector
+from .base import BaseCollector, make_retry_session
 
 ENDPOINT = "https://api.fda.gov/food/enforcement.json"
 PAGE_SIZE = 1000  # openFDA hard cap is 1000.
@@ -24,6 +22,7 @@ class FDAEnforcementCollector(BaseCollector):
     def fetch_raw(self, since: datetime | None = None, limit: int | None = None) -> Iterator[dict]:
         skip = 0
         fetched = 0
+        session = make_retry_session()
         while True:
             page_size = min(PAGE_SIZE, (limit - fetched) if limit else PAGE_SIZE)
             if page_size <= 0:
@@ -35,7 +34,7 @@ class FDAEnforcementCollector(BaseCollector):
                 date_str = since.strftime("%Y%m%d")
                 today_str = datetime.utcnow().strftime("%Y%m%d")
                 url += f"&search=report_date:[{date_str}+TO+{today_str}]"
-            r = requests.get(url, timeout=30)
+            r = session.get(url, timeout=30)
             if r.status_code == 404:
                 # openFDA returns 404 when results exhausted.
                 return
@@ -89,9 +88,9 @@ class FDAEnforcementCollector(BaseCollector):
 
     @staticmethod
     def _build_title(raw: dict) -> str:
-        firm = raw.get("recalling_firm", "")
-        cls = raw.get("classification", "")
-        product = raw.get("product_description", "")[:80]
+        firm = str(raw.get("recalling_firm") or "")
+        cls = str(raw.get("classification") or "")
+        product = str(raw.get("product_description") or "")[:80]
         return f"{firm} — {cls} — {product}".strip(" —")
 
 

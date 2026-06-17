@@ -33,6 +33,9 @@ class FSISCollector(BaseCollector):
         r.raise_for_status()
         data = r.json()
         if not isinstance(data, list):
+            import sys
+            print(f"FSIS: unexpected response type {type(data).__name__} — expected list. "
+                  f"API may have changed format.", file=sys.stderr)
             return
         count = 0
         for rec in data:

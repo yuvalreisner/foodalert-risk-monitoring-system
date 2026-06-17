@@ -214,7 +214,11 @@ def main() -> None:
 
         all_scores = [float(r["bi_encoder_score"]) for r in all_rows]
         requested_tiers = {t.strip().lower() for t in args.tier.split(",")}
-        min_cutoff = min(TIER_CUTOFFS[t] for t in requested_tiers if t in TIER_CUTOFFS)
+        valid_cutoffs = [TIER_CUTOFFS[t] for t in requested_tiers if t in TIER_CUTOFFS]
+        if not valid_cutoffs:
+            print(f"No valid tiers in {args.tier!r}. Valid: {list(TIER_CUTOFFS)}", file=sys.stderr)
+            sys.exit(1)
+        min_cutoff = min(valid_cutoffs)
 
         rows = []
         for r in all_rows:
