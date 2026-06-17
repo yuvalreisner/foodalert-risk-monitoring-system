@@ -790,18 +790,22 @@ details.alert-card[open] summary{border-bottom:1px solid var(--border)}
 .sort-pill:hover{border-color:#aaa}
 .sort-pill.sort-active{background:var(--text);color:#fff;border-color:var(--text)}
 img.emoji{height:1em;width:1em;margin:0 .05em 0 .1em;vertical-align:-.1em;display:inline}
-.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:8px}
-.filter-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}
-.filter-row:last-child{margin-bottom:0}
-.filter-label{font-size:11px;color:var(--muted);font-weight:600;min-width:56px;text-transform:uppercase;letter-spacing:.4px}
-.fc{cursor:pointer;background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:3px 11px;font-size:12px;color:var(--muted);transition:all .15s;white-space:nowrap}
+/* ── Floating filters ── */
+#floating-filters{position:fixed;right:18px;top:18px;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.10);padding:0;z-index:200;width:200px;display:none}
+#floating-filters .ff-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+#floating-filters .ff-body{padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+@media(min-width:1280px){#floating-filters{display:block}}
+.filter-row{display:flex;flex-direction:column;gap:4px}
+.filter-label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.fc{cursor:pointer;background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:2px 9px;font-size:11px;color:var(--muted);transition:all .15s;white-space:nowrap}
 .fc:hover{border-color:#aaa}
 .fc.fca{background:var(--text);color:#fff;border-color:var(--text)}
-#filter-country-input{padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;width:190px;outline:none;color:var(--text)}
+.fc-row{display:flex;flex-wrap:wrap;gap:4px}
+#filter-country-input{padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;font-size:11px;width:100%;box-sizing:border-box;outline:none;color:var(--text)}
 #filter-country-input:focus{border-color:#888}
-#filter-product-select{padding:3px 10px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;color:var(--text);background:#fff;cursor:pointer;outline:none;max-width:280px}
+#filter-product-select{padding:3px 8px;border:1.5px solid var(--border);border-radius:20px;font-size:11px;color:var(--text);background:#fff;cursor:pointer;outline:none;width:100%;box-sizing:border-box}
 #filter-product-select:focus{border-color:#888}
-#clear-filters-btn{background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:20px;padding:2px 10px;font-size:11px;cursor:pointer;transition:all .15s;display:none}
+#clear-filters-btn{background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:20px;padding:2px 10px;font-size:11px;cursor:pointer;transition:all .15s;display:none;width:100%}
 #clear-filters-btn:hover{background:#e74c3c;color:#fff}
 #filter-badge{font-size:11px;color:#e67e22;font-weight:600;display:none}
 .show-more-btn{cursor:pointer;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:6px 14px;font-size:12px;color:var(--muted);display:block;margin:6px auto 14px;transition:background .15s}
@@ -849,6 +853,48 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
     </div>
   </div>
   <div class="meta" id="header-meta"></div>
+  </div>
+</div>
+
+<div id="floating-filters">
+  <div class="ff-header">
+    <span>Filters</span>
+    <span id="filter-badge" style="font-size:10px;background:#e74c3c;color:#fff;border-radius:10px;padding:1px 6px;display:none"></span>
+  </div>
+  <div class="ff-body">
+    <div class="filter-row">
+      <span class="filter-label">Hazard</span>
+      <div class="fc-row">
+        <button class="fc fca" data-f="hazard" data-v="" onclick="setFilter('hazard','')">All</button>
+        <button class="fc" data-f="hazard" data-v="biological"  onclick="setFilter('hazard','biological')">🦠 Bio</button>
+        <button class="fc" data-f="hazard" data-v="chemical"    onclick="setFilter('hazard','chemical')">⚗️ Chem</button>
+        <button class="fc" data-f="hazard" data-v="allergen"    onclick="setFilter('hazard','allergen')">🌾 Allergen</button>
+        <button class="fc" data-f="hazard" data-v="physical"    onclick="setFilter('hazard','physical')">🔩 Physical</button>
+      </div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Source</span>
+      <div class="fc-row">
+        <button class="fc fca" data-f="source" data-v="" onclick="setFilter('source','')">All</button>
+        <button class="fc" data-f="source" data-v="rasff"           onclick="setFilter('source','rasff')">RASFF</button>
+        <button class="fc" data-f="source" data-v="fda_enforcement" onclick="setFilter('source','fda_enforcement')">FDA</button>
+        <button class="fc" data-f="source" data-v="fsis"            onclick="setFilter('source','fsis')">USDA FSIS</button>
+        <button class="fc" data-f="source" data-v="fsa_uk"          onclick="setFilter('source','fsa_uk')">FSA UK</button>
+      </div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Product</span>
+      <select id="filter-product-select" onchange="setProductFilter(this.value)">
+        <option value="">All categories</option>
+      </select>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Country</span>
+      <input id="filter-country-input" type="text" placeholder="Origin country…"
+             list="country-datalist" oninput="setCountryFilter(this.value)">
+      <datalist id="country-datalist"></datalist>
+    </div>
+    <button id="clear-filters-btn" onclick="clearFilters()">× Clear all filters</button>
   </div>
 </div>
 
@@ -998,40 +1044,7 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
     <div id="israel-section"></div>
   </div>
 
-  <!-- Filter bar -->
   <div id="critical-section-anchor"></div>
-  <div class="filter-bar">
-    <div class="filter-row">
-      <span class="filter-label">Hazard</span>
-      <button class="fc fca" data-f="hazard" data-v="" onclick="setFilter('hazard','')">All</button>
-      <button class="fc" data-f="hazard" data-v="biological"  onclick="setFilter('hazard','biological')">🦠 Biological</button>
-      <button class="fc" data-f="hazard" data-v="chemical"    onclick="setFilter('hazard','chemical')">⚗️ Chemical</button>
-      <button class="fc" data-f="hazard" data-v="allergen"    onclick="setFilter('hazard','allergen')">🌾 Allergen</button>
-      <button class="fc" data-f="hazard" data-v="physical"    onclick="setFilter('hazard','physical')">🔩 Physical</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">Source</span>
-      <button class="fc fca" data-f="source" data-v="" onclick="setFilter('source','')">All</button>
-      <button class="fc" data-f="source" data-v="rasff"           onclick="setFilter('source','rasff')">RASFF</button>
-      <button class="fc" data-f="source" data-v="fda_enforcement" onclick="setFilter('source','fda_enforcement')">FDA</button>
-      <button class="fc" data-f="source" data-v="fsis"            onclick="setFilter('source','fsis')">USDA FSIS</button>
-      <button class="fc" data-f="source" data-v="fsa_uk"          onclick="setFilter('source','fsa_uk')">FSA UK</button>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">Product</span>
-      <select id="filter-product-select" onchange="setProductFilter(this.value)">
-        <option value="">All categories</option>
-      </select>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">Country</span>
-      <input id="filter-country-input" type="text" placeholder="Origin country…"
-             list="country-datalist" oninput="setCountryFilter(this.value)">
-      <datalist id="country-datalist"></datalist>
-      <button id="clear-filters-btn" onclick="clearFilters()">× Clear filters</button>
-      <span id="filter-badge"></span>
-    </div>
-  </div>
 
   <!-- Sort control -->
   <div style="display:flex;align-items:center;gap:8px;margin:4px 0 4px;padding:0 2px">
