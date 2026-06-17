@@ -671,6 +671,7 @@ _HTML_TEMPLATE = r"""<!DOCTYPE html>
 <title>FoodAlert — Risk Monitoring System</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 <style>
 :root {
   --critical:#c0392b; --high:#d35400; --medium:#d4ac0d; --low:#7f8c8d;
@@ -719,7 +720,7 @@ a{color:var(--israel);text-decoration:none} a:hover{text-decoration:underline}
 #floating-toc li a{display:flex;align-items:center;gap:6px;padding:5px 13px;font-size:12px;color:var(--muted);cursor:pointer;border-left:3px solid transparent;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
 #floating-toc li a:hover{color:var(--text);background:#f5f7fa}
 #floating-toc li a.toc-active{color:var(--israel);font-weight:700;border-left-color:var(--israel);background:#eaf2fb}
-@media(min-width:1380px){#floating-toc{display:block}}
+@media(min-width:1280px){#floating-toc{display:block}}
 .section-title{font-size:17px;font-weight:700;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
 .section-title .count{font-size:13px;font-weight:400;color:var(--muted);margin-left:4px}
 
@@ -782,7 +783,10 @@ details.alert-card[open] summary{border-bottom:1px solid var(--border)}
 /* ── Toggle button ── */
 .toggle-btn{cursor:pointer;background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:8px 16px;font-size:13px;color:var(--muted);width:100%;text-align:center;margin:8px 0;transition:background .15s}
 .toggle-btn:hover{background:var(--bg)}
-#medium-section{display:none}
+.sort-pill{cursor:pointer;background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:3px 12px;font-size:12px;color:var(--muted);transition:all .15s}
+.sort-pill:hover{border-color:#aaa}
+.sort-pill.sort-active{background:var(--text);color:#fff;border-color:var(--text)}
+img.emoji{height:1em;width:1em;margin:0 .05em 0 .1em;vertical-align:-.1em;display:inline}
 .show-more-btn{cursor:pointer;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:6px 14px;font-size:12px;color:var(--muted);display:block;margin:6px auto 14px;transition:background .15s}
 .show-more-btn:hover{background:var(--bg)}
 
@@ -839,7 +843,7 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
     <li><a onclick="tocScrollTo('toc-israel')"><span>🇮🇱</span> Israel Watch</a></li>
     <li><a onclick="tocScrollTo('toc-critical')"><span>🔴</span> Critical Alerts</a></li>
     <li><a onclick="tocScrollTo('toc-high')"><span>🟠</span> High Alerts</a></li>
-    <li><a onclick="tocScrollTo('medium-section', true)"><span>🟡</span> Medium Alerts</a></li>
+    <li><a onclick="tocScrollTo('toc-medium', true)"><span>🟡</span> Medium Alerts</a></li>
     <li><a onclick="tocScrollTo('toc-breakdowns')"><span>📊</span> Data Sources</a></li>
     <li><a onclick="tocScrollTo('toc-about')"><span>ℹ️</span> About</a></li>
   </ul>
@@ -977,26 +981,48 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
     <div id="israel-section"></div>
   </div>
 
+  <!-- Sort control -->
+  <div id="critical-section-anchor"></div>
+  <div style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;padding:0 2px">
+    <span style="font-size:12px;color:var(--muted)">Sort by:</span>
+    <button id="sort-score-btn" class="sort-pill sort-active" onclick="setSortBy('score')">Score</button>
+    <button id="sort-date-btn"  class="sort-pill"             onclick="setSortBy('date')">Date</button>
+  </div>
+
   <!-- SECTION 3: Critical Alerts -->
   <div id="toc-critical" class="section">
-    <div id="critical-section-anchor"></div>
-    <div class="section-title">🔴 Critical Alerts <span class="count" id="critical-count"></span></div>
-    <div id="critical-feed"></div>
-    <button class="show-more-btn" id="critical-more-btn"></button>
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>🔴 Critical Alerts <span class="count" id="critical-count"></span></span>
+      <button class="toggle-btn" onclick="toggleCritical()" id="critical-toggle-btn"
+        style="width:auto;margin:0;padding:4px 12px;font-size:12px">▴ Hide</button>
+    </div>
+    <div id="critical-section-body">
+      <div id="critical-feed"></div>
+      <button class="show-more-btn" id="critical-more-btn"></button>
+    </div>
   </div>
 
   <!-- SECTION 4: High Alerts -->
   <div id="toc-high" class="section">
-    <div class="section-title">🟠 High Alerts <span class="count" id="high-count"></span></div>
-    <div id="high-feed"></div>
-    <button class="show-more-btn" id="high-more-btn"></button>
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>🟠 High Alerts <span class="count" id="high-count"></span></span>
+      <button class="toggle-btn" onclick="toggleHigh()" id="high-toggle-btn"
+        style="width:auto;margin:0;padding:4px 12px;font-size:12px">▴ Hide</button>
+    </div>
+    <div id="high-section-body">
+      <div id="high-feed"></div>
+      <button class="show-more-btn" id="high-more-btn"></button>
+    </div>
   </div>
 
   <!-- SECTION 5: Medium Alerts -->
-  <button class="toggle-btn" onclick="toggleMedium()" id="medium-btn"></button>
-  <div id="medium-section">
-    <div class="section">
-      <div class="section-title">🟡 Medium Alerts <span class="count" id="medium-count"></span></div>
+  <div id="toc-medium" class="section">
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>🟡 Medium Alerts <span class="count" id="medium-count"></span></span>
+      <button class="toggle-btn" onclick="toggleMedium()" id="medium-toggle-btn"
+        style="width:auto;margin:0;padding:4px 12px;font-size:12px">▾ Show</button>
+    </div>
+    <div id="medium-section" style="display:none">
       <div id="medium-feed"></div>
       <button class="show-more-btn" id="medium-more-btn"></button>
     </div>
@@ -1043,35 +1069,6 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
           </div><!-- end right half -->
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- SECTION 5: Export -->
-  <div class="section">
-    <div class="section-title">⬇️ Export Data</div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <label style="font-size:14px;color:var(--text);font-weight:500">Last
-        <input id="export-days" type="number" value="30" min="1" max="365"
-          style="width:64px;margin:0 6px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:14px;text-align:center">
-        days
-      </label>
-      <label style="font-size:14px;color:var(--text);font-weight:500;display:flex;align-items:center;gap:6px">
-        <input id="export-critical" type="checkbox" checked> Critical
-      </label>
-      <label style="font-size:14px;color:var(--text);font-weight:500;display:flex;align-items:center;gap:6px">
-        <input id="export-high" type="checkbox" checked> High
-      </label>
-      <label style="font-size:14px;color:var(--text);font-weight:500;display:flex;align-items:center;gap:6px">
-        <input id="export-medium" type="checkbox"> Medium
-      </label>
-      <label style="font-size:14px;color:var(--text);font-weight:500;display:flex;align-items:center;gap:6px">
-        <input id="export-low" type="checkbox"> Low
-      </label>
-      <button onclick="exportCSV()"
-        style="background:#1a1f2e;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:14px;font-weight:600;cursor:pointer;margin-left:auto">
-        ⬇️ Download CSV
-      </button>
-      <span id="export-status" style="font-size:12px;color:var(--muted)"></span>
     </div>
   </div>
 
@@ -1317,7 +1314,7 @@ document.getElementById('breakdown-window').textContent =
   const TIERS = [
     { label:'Critical', n: m.n_critical, color:'#c0392b', scrollTo:'critical-section-anchor' },
     { label:'High',     n: m.n_high,     color:'#d35400', scrollTo:'high-feed' },
-    { label:'Medium',   n: m.n_medium,   color:'#d4ac0d', scrollTo:'medium-section', toggleMed:true },
+    { label:'Medium',   n: m.n_medium,   color:'#d4ac0d', scrollTo:'toc-medium', toggleMed:true },
     { label:'Low',      n: n_other,      color:'#aab4c8', scrollTo:null },
   ];
 
@@ -1450,6 +1447,20 @@ function scrollToTierById(id, toggleMed){
 // ── Alert Feed ────────────────────────────────────────────────────────────
 const INITIAL_SHOW = 10;
 
+// Sort state — shared across all tier sections
+let _sortMode = 'score';
+const _feedAlerts = {};
+
+function _sortedAlerts(arr){
+  const copy = [...arr];
+  if(_sortMode === 'date'){
+    copy.sort((a,b) => b.source_published_date.localeCompare(a.source_published_date));
+  } else {
+    copy.sort((a,b) => b.absolute_score - a.absolute_score);
+  }
+  return copy;
+}
+
 function renderFeedSection(alerts, containerId, btnId, label){
   const container = document.getElementById(containerId);
   const btn       = document.getElementById(btnId);
@@ -1467,44 +1478,81 @@ function renderFeedSection(alerts, containerId, btnId, label){
     }
   }
 
-  btn.addEventListener('click', ()=>{ showing = alerts.length; render(); });
+  btn.onclick = ()=>{ showing = alerts.length; render(); };
   render();
 }
 
+function _rerenderFeeds(){
+  renderFeedSection(_sortedAlerts(_feedAlerts.critical), 'critical-feed', 'critical-more-btn', 'critical');
+  renderFeedSection(_sortedAlerts(_feedAlerts.high),     'high-feed',     'high-more-btn',     'high');
+  renderFeedSection(_sortedAlerts(_feedAlerts.medium),   'medium-feed',   'medium-more-btn',   'medium');
+}
+
+function setSortBy(mode){
+  _sortMode = mode;
+  document.getElementById('sort-score-btn').classList.toggle('sort-active', mode==='score');
+  document.getElementById('sort-date-btn').classList.toggle('sort-active',  mode==='date');
+  _rerenderFeeds();
+}
+
 (function(){
-  const critical = DATA.alerts.filter(a=>a.tier==='critical');
-  const high     = DATA.alerts.filter(a=>a.tier==='high');
-  const medium   = DATA.alerts.filter(a=>a.tier==='medium');
+  _feedAlerts.critical = DATA.alerts.filter(a=>a.tier==='critical');
+  _feedAlerts.high     = DATA.alerts.filter(a=>a.tier==='high');
+  _feedAlerts.medium   = DATA.alerts.filter(a=>a.tier==='medium');
 
-  document.getElementById('critical-count').textContent = critical.length;
-  document.getElementById('high-count').textContent     = high.length;
-  document.getElementById('medium-count').textContent   = medium.length;
+  document.getElementById('critical-count').textContent = _feedAlerts.critical.length;
+  document.getElementById('high-count').textContent     = _feedAlerts.high.length;
+  document.getElementById('medium-count').textContent   = _feedAlerts.medium.length;
 
-  renderFeedSection(critical, 'critical-feed', 'critical-more-btn', 'critical');
-  renderFeedSection(high,     'high-feed',     'high-more-btn',     'high');
-  renderFeedSection(medium,   'medium-feed',   'medium-more-btn',   'medium');
+  _rerenderFeeds();
 
   // After all cards are in the DOM, handle deep-link hash navigation
   if (window.location.hash) openAlertFromHash();
 
-  const medBtn = document.getElementById('medium-btn');
-  if(medium.length > 0){
-    medBtn.textContent = `▾ Show ${medium.length} medium alerts`;
+  const medToggleBtn = document.getElementById('medium-toggle-btn');
+  if(_feedAlerts.medium.length > 0){
+    medToggleBtn.textContent = `▾ Show (${_feedAlerts.medium.length})`;
   } else {
-    medBtn.style.display='none';
+    medToggleBtn.style.display='none';
   }
 })();
 
-function toggleMedium(){
-  const sec = document.getElementById('medium-section');
-  const btn = document.getElementById('medium-btn');
-  if(sec.style.display==='none'||!sec.style.display){
-    sec.style.display='block';
-    btn.textContent = '▴ Hide medium alerts';
+function toggleCritical(){
+  const body = document.getElementById('critical-section-body');
+  const btn  = document.getElementById('critical-toggle-btn');
+  if(body.style.display==='none'){
+    body.style.display='block';
+    btn.textContent = '▴ Hide';
   } else {
-    sec.style.display='none';
+    body.style.display='none';
+    const n = DATA.alerts.filter(a=>a.tier==='critical').length;
+    btn.textContent = `▾ Show (${n})`;
+  }
+}
+
+function toggleHigh(){
+  const body = document.getElementById('high-section-body');
+  const btn  = document.getElementById('high-toggle-btn');
+  if(body.style.display==='none'){
+    body.style.display='block';
+    btn.textContent = '▴ Hide';
+  } else {
+    body.style.display='none';
+    const n = DATA.alerts.filter(a=>a.tier==='high').length;
+    btn.textContent = `▾ Show (${n})`;
+  }
+}
+
+function toggleMedium(){
+  const body = document.getElementById('medium-section');
+  const btn  = document.getElementById('medium-toggle-btn');
+  if(body.style.display==='none'){
+    body.style.display='block';
+    btn.textContent = '▴ Hide';
+  } else {
+    body.style.display='none';
     const n = DATA.alerts.filter(a=>a.tier==='medium').length;
-    btn.textContent = `▾ Show ${n} medium alerts`;
+    btn.textContent = `▾ Show (${n})`;
   }
 }
 
@@ -1748,7 +1796,7 @@ new Chart(document.getElementById('countryChart'),{
 (function(){
   const TOC_SECTIONS = [
     'toc-overview','toc-trends','toc-israel','toc-critical',
-    'toc-high','medium-section','toc-breakdowns','toc-about'
+    'toc-high','toc-medium','toc-breakdowns','toc-about'
   ];
   const tocLinks = Array.from(document.querySelectorAll('#floating-toc li a'));
 
@@ -1804,7 +1852,11 @@ function openAlertFromHash() {
     const btn = document.getElementById(btnId);
     if (btn && btn.style.display !== 'none') btn.click();
   });
-  // Show medium section if hidden
+  // Reveal collapsed bodies if hidden
+  const critBody = document.getElementById('critical-section-body');
+  if (critBody && critBody.style.display === 'none') toggleCritical();
+  const highBody = document.getElementById('high-section-body');
+  if (highBody && highBody.style.display === 'none') toggleHigh();
   const medSec = document.getElementById('medium-section');
   if (medSec && (medSec.style.display === 'none' || !medSec.style.display)) toggleMedium();
 
@@ -1872,23 +1924,14 @@ function updateTierLabel() {
   else lbl.textContent = selected.join(', ');
 }
 
-function tocExportCSV() {
-  document.getElementById('export-days').value       = document.getElementById('toc-export-days').value;
-  document.getElementById('export-critical').checked = document.getElementById('toc-exp-crit').checked;
-  document.getElementById('export-high').checked     = document.getElementById('toc-exp-high').checked;
-  document.getElementById('export-medium').checked   = document.getElementById('toc-exp-med').checked;
-  document.getElementById('export-low').checked      = document.getElementById('toc-exp-low').checked;
-  exportCSV();
-  const status = document.getElementById('export-status').textContent;
-  document.getElementById('toc-export-status').textContent = status;
-}
+function tocExportCSV() { exportCSV(); }
 
 function exportCSV() {
-  const days     = parseInt(document.getElementById('export-days').value) || 30;
-  const wantCrit = document.getElementById('export-critical').checked;
-  const wantHigh = document.getElementById('export-high').checked;
-  const wantMed  = document.getElementById('export-medium').checked;
-  const wantLow  = document.getElementById('export-low').checked;
+  const days     = parseInt(document.getElementById('toc-export-days').value) || 30;
+  const wantCrit = document.getElementById('toc-exp-crit').checked;
+  const wantHigh = document.getElementById('toc-exp-high').checked;
+  const wantMed  = document.getElementById('toc-exp-med').checked;
+  const wantLow  = document.getElementById('toc-exp-low').checked;
 
   const cutoff = new Date(DATA.meta.ref_date);
   cutoff.setDate(cutoff.getDate() - days);
@@ -1911,7 +1954,7 @@ function exportCSV() {
   );
 
   if (!rows.length) {
-    document.getElementById('export-status').textContent = 'No alerts found for selected filters.';
+    document.getElementById('toc-export-status').textContent = 'No alerts found for selected filters.';
     return;
   }
 
@@ -1954,7 +1997,21 @@ function exportCSV() {
   link.click();
   URL.revokeObjectURL(url);
 
-  document.getElementById('export-status').textContent = `✓ Exported ${rows.length} alerts`;
+  document.getElementById('toc-export-status').textContent = `✓ Exported ${rows.length} alerts`;
+}
+// Twemoji — replace emoji with SVG images for consistent rendering on all platforms (incl. Windows)
+if (typeof twemoji !== 'undefined') {
+  twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
+  // Re-parse dynamically rendered cards when feed re-renders
+  const _origRenderCard = renderCard;
+  // observe DOM mutations in feed containers to re-parse new emoji
+  const _twObserver = new MutationObserver(() => {
+    twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });
+  });
+  ['critical-feed','high-feed','medium-feed','israel-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) _twObserver.observe(el, { childList: true, subtree: true });
+  });
 }
 </script>
 </body>

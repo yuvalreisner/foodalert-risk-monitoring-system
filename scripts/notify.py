@@ -27,7 +27,7 @@ from scripts.generate_dashboard import _absolute_score
 
 SCORE_THRESHOLD = 8.5
 RECIPIENTS = [
-    "yuvalreisner96@gmail.com",  # TODO: change to matan.shiner@moh.gov.il for production
+    "matan.shiner@moh.gov.il",
 ]
 SENDER = "FoodSafe Alerts <onboarding@resend.dev>"
 RESEND_API_URL = "https://api.resend.com/emails"

@@ -48,10 +48,16 @@ class FSISCollector(BaseCollector):
         record_id = str(raw.get("field_recall_number") or "")
         title = raw.get("field_title", "")
         firm = raw.get("field_establishment", "")
-        summary = raw.get("field_summary", "") or raw.get("field_recall_reason", "")
+        summary = _as_str(raw.get("field_summary") or raw.get("field_recall_reason"))
         states_raw = raw.get("field_states", "")
-        product_items = raw.get("field_product_items", "")
-        classification = raw.get("field_recall_classification", "") or raw.get("field_risk_level", "")
+        product_items = _as_str(raw.get("field_product_items", ""))
+        classification = _as_str(raw.get("field_recall_classification") or raw.get("field_risk_level", ""))
+        reason = _as_str(raw.get("field_recall_reason"))
+
+        if isinstance(states_raw, list):
+            states_list = [s.strip() for s in states_raw if s]
+        else:
+            states_list = [s.strip() for s in states_raw.split(",") if s.strip()]
 
         return {
             "id": f"fsis::{record_id}",
@@ -64,22 +70,31 @@ class FSISCollector(BaseCollector):
             "event_initiation_date": _parse_fsis_date(raw.get("field_recall_date")),
             "event_status": _normalize_status(raw),
             "origin_country": "United States",
-            "distribution_countries": json.dumps([s.strip() for s in states_raw.split(",") if s.strip()]) if states_raw else json.dumps([]),
+            "distribution_countries": json.dumps(states_list),
             "israel_relevance_flag": 1 if "israel" in json.dumps(raw, default=str).lower() else 0,
             "recalling_firm": firm or None,
             "brand_names": json.dumps([]),
             "product_description": product_items or None,
-            "product_category": "Meat & Poultry",  # FSIS jurisdiction.
+            "product_category": "Meat & Poultry",
             "hazard_category": None,
-            "hazard_specific": _extract_hazard_specific(raw.get("field_recall_reason", ""), summary),
+            "hazard_specific": _extract_hazard_specific(reason, summary),
             "severity_raw": classification or None,
-            "severity_normalized": _normalize_fsis_class(classification, raw.get("field_recall_reason", "")),
+            "severity_normalized": _normalize_fsis_class(classification, reason),
             "population_at_risk": None,
             "illness_count_reported": None,
             "title": title or None,
             "description": _strip_html(summary) or None,
-            "reason_for_recall": raw.get("field_recall_reason") or None,
+            "reason_for_recall": reason or None,
         }
+
+
+def _as_str(value) -> str:
+    """Coerce a string-or-list field to a plain string."""
+    if value is None:
+        return ""
+    if isinstance(value, list):
+        return "; ".join(str(v) for v in value if v)
+    return str(value)
 
 
 def _parse_fsis_date(date_str: str | None) -> str | None:
