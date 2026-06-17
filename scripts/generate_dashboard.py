@@ -2037,7 +2037,7 @@ function _barChartOpts(color, total, fullLabels) {
       y:{ticks:{font:{size:14}, crossAlign:'far',
            callback:(val,i) => _truncLabel(fullLabels[i], 4)},
          title:{display:false},
-         afterFit: scale => { scale.width = Math.max(scale.width, 170); }}
+         afterFit: scale => { scale.width = 200; }}
     }
   };
 }
