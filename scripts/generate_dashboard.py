@@ -2014,6 +2014,11 @@ function _truncLabel(s, maxWords) {
   if (words.length <= maxWords) return s;
   return words.slice(0, maxWords).join(' ') + '…';
 }
+Chart.register({
+  id: 'fixYAxis',
+  afterLayout(chart) { if (chart.scales && chart.scales.y) chart.scales.y.width = 200; }
+});
+
 function _barChartOpts(color, total, fullLabels) {
   return {indexAxis:'y', responsive:true, maintainAspectRatio:false,
     plugins:{
@@ -2030,14 +2035,13 @@ function _barChartOpts(color, total, fullLabels) {
         formatter: v => v
       }
     },
-    layout:{padding:{right:36}},
+    layout:{padding:{right:40}},
     scales:{
       x:{beginAtZero:true, ticks:{font:{size:14}},
          title:{display:true, text:'Number of Alerts', color:'#5a6478', font:{size:13}}},
       y:{ticks:{font:{size:14}, crossAlign:'far',
            callback:(val,i) => _truncLabel(fullLabels[i], 4)},
-         title:{display:false},
-         afterFit: scale => { scale.width = 200; }}
+         title:{display:false}}
     }
   };
 }
