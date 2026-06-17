@@ -559,7 +559,7 @@ def main() -> None:
     breakdowns = {
         "hazard_category":  _hazard_breakdown(),
         "product_category": _breakdown("product_category", 10),
-        "origin_country":   _breakdown("origin_country",   15),
+        "origin_country":   _breakdown("origin_country",   10),
         "source": {
             "labels": list(SOURCE_LABELS.values()),
             "data": [
@@ -1054,7 +1054,7 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
         <div class="chart-wrap tall"><canvas id="productChart"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-title">Origin country (top 15)</div>
+        <div class="chart-title">Origin country (top 10)</div>
         <div class="chart-wrap xtall"><canvas id="countryChart"></canvas></div>
       </div>
     </div>
@@ -1963,15 +1963,15 @@ function _barChartOpts(color, total, fullLabels) {
       },
       datalabels:{
         anchor:'end', align:'end', clamp:true,
-        color:'#5a6478', font:{size:11},
+        color:'#5a6478', font:{size:14},
         formatter: v => v
       }
     },
     layout:{padding:{right:36}},
     scales:{
-      x:{beginAtZero:true, ticks:{font:{size:11}},
-         title:{display:true, text:'Number of Alerts', color:'#5a6478', font:{size:11}}},
-      y:{ticks:{font:{size:11}, crossAlign:'far',
+      x:{beginAtZero:true, ticks:{font:{size:14}},
+         title:{display:true, text:'Number of Alerts', color:'#5a6478', font:{size:13}}},
+      y:{ticks:{font:{size:14}, crossAlign:'far',
            callback:(val,i) => _truncLabel(fullLabels[i], 4)},
          title:{display:false}}
     }
@@ -2090,7 +2090,7 @@ function _updateBreakdowns(filtered) {
 
   // Country bar
   if (_charts.country) {
-    const cd = _topN(filtered, a => a.origin_country, 15);
+    const cd = _topN(filtered, a => a.origin_country, 10);
     const cdTotal = cd.data.reduce((s,v)=>s+v,0);
     _charts.country.data.labels = cd.labels;
     _charts.country.data.datasets[0].data = cd.data;
