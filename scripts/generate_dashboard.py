@@ -1574,15 +1574,10 @@ function toggleMsOption(type, cb) {
 }
 
 function toggleMsAll(type, cb) {
-  const opts = document.querySelectorAll(`#msp-${type} .ms-opt`);
-  if (cb.checked) {
-    // "All" checked → clear individual selections
-    _filters[type].clear();
-    opts.forEach(o => o.checked = false);
-  } else {
-    // "All" unchecked → select all individual options
-    opts.forEach(o => { o.checked = true; _filters[type].add(o.value); });
-  }
+  // "All" always means: clear all individual selections → no filter
+  _filters[type].clear();
+  document.querySelectorAll(`#msp-${type} .ms-opt`).forEach(o => o.checked = false);
+  cb.checked = true; // keep All visually checked
   _updateMsLabel(type);
   _applyAll();
 }
@@ -1633,8 +1628,76 @@ function _applyAll() {
   document.getElementById('high-count').textContent     = _feedAlerts.high.filter(_passesFilters).length;
   document.getElementById('medium-count').textContent   = _feedAlerts.medium.filter(_passesFilters).length;
 
-  const all = [..._feedAlerts.critical, ..._feedAlerts.high, ..._feedAlerts.medium].filter(_passesFilters);
-  _updateBreakdowns(all);
+  if (n === 0) {
+    _resetBreakdowns();
+  } else {
+    const all = [..._feedAlerts.critical, ..._feedAlerts.high, ..._feedAlerts.medium].filter(_passesFilters);
+    _updateBreakdowns(all);
+  }
+}
+
+function _resetBreakdowns() {
+  const HAZARD_COLORS = ['#c0392b','#8e44ad','#e67e22','#2980b9','#16a085','#7f8c8d','#bdc3c7'];
+  const SOURCE_COLORS = ['#003087','#007749','#9c1a1c','#f0b400'];
+
+  if (_charts.hazard) {
+    const hd = DATA.breakdowns.hazard_category;
+    const hTotal = hd.data.reduce((s,v)=>s+v,0);
+    _charts.hazard.data.labels = hd.labels;
+    _charts.hazard.data.datasets[0].data = hd.data;
+    _charts.hazard.data.datasets[0].backgroundColor = HAZARD_COLORS.slice(0, hd.labels.length);
+    _charts.hazard.options.plugins.datalabels.formatter = v => {
+      const pct = hTotal ? Math.round(v/hTotal*100) : 0;
+      return pct >= 4 ? pct+'%' : '';
+    };
+    _charts.hazard.update();
+    document.getElementById('hazard-total').textContent = hTotal;
+    const legendEl = document.getElementById('hazard-legend');
+    if (legendEl) legendEl.innerHTML = hd.labels.map((lbl,i) =>
+      `<div class="ov-stat" style="cursor:default">
+        <div class="ov-dot" style="background:${HAZARD_COLORS[i%HAZARD_COLORS.length]}"></div>
+        <div class="ov-label" style="width:90px;text-transform:capitalize">${lbl}</div>
+        <div class="ov-val">${hd.data[i]}</div>
+      </div>`).join('');
+  }
+  if (_charts.product) {
+    const pd = DATA.breakdowns.product_category;
+    const pdTotal = pd.data.reduce((s,v)=>s+v,0);
+    _charts.product.data.labels = pd.labels.map(l=>_truncLabel(l,4));
+    _charts.product.data.datasets[0].data = pd.data;
+    _charts.product.options.plugins.tooltip.callbacks.title = items => pd.labels[items[0].dataIndex];
+    _charts.product.options.plugins.tooltip.callbacks.label = item => ` ${item.raw}  (${pdTotal ? Math.round(item.raw/pdTotal*100) : 0}%)`;
+    _charts.product.options.scales.y.ticks.callback = (val,i) => _truncLabel(pd.labels[i]||'',4);
+    _charts.product.update();
+  }
+  if (_charts.country) {
+    const cd = DATA.breakdowns.origin_country;
+    const cdTotal = cd.data.reduce((s,v)=>s+v,0);
+    _charts.country.data.labels = cd.labels;
+    _charts.country.data.datasets[0].data = cd.data;
+    _charts.country.options.plugins.tooltip.callbacks.label = item => ` ${item.raw}  (${cdTotal ? Math.round(item.raw/cdTotal*100) : 0}%)`;
+    _charts.country.update();
+  }
+  if (_charts.source) {
+    const sd = DATA.breakdowns.source;
+    const sTotal = sd.data.reduce((s,v)=>s+v,0);
+    _charts.source.data.labels = sd.labels;
+    _charts.source.data.datasets[0].data = sd.data;
+    _charts.source.data.datasets[0].backgroundColor = sd.colors || SOURCE_COLORS;
+    _charts.source.options.plugins.datalabels.formatter = v => {
+      const pct = sTotal ? Math.round(v/sTotal*100) : 0;
+      return pct >= 4 ? pct+'%' : '';
+    };
+    _charts.source.update();
+    document.getElementById('source-total').textContent = sTotal;
+    const legendEl = document.getElementById('source-legend');
+    if (legendEl) legendEl.innerHTML = sd.labels.map((lbl,i) =>
+      `<div class="ov-stat" style="cursor:default">
+        <div class="ov-dot" style="background:${(sd.colors||SOURCE_COLORS)[i%SOURCE_COLORS.length]}"></div>
+        <div class="ov-label" style="width:auto;flex:1;font-size:12px">${lbl}</div>
+        <div class="ov-val">${sd.data[i]}</div>
+      </div>`).join('');
+  }
 }
 
 function _sortedAlerts(arr){
@@ -1973,7 +2036,8 @@ function _barChartOpts(color, total, fullLabels) {
          title:{display:true, text:'Number of Alerts', color:'#5a6478', font:{size:13}}},
       y:{ticks:{font:{size:14}, crossAlign:'far',
            callback:(val,i) => _truncLabel(fullLabels[i], 4)},
-         title:{display:false}}
+         title:{display:false},
+         afterFit: scale => { scale.width = Math.max(scale.width, 170); }}
     }
   };
 }
