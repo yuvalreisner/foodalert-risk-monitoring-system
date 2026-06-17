@@ -1944,18 +1944,45 @@ function switchTrendBreakdown(mode){
 
 // Product bar
 const productTotal = DATA.breakdowns.product_category.data.reduce((s,v)=>s+v,0);
+function _truncLabel(s, maxWords) {
+  const words = s.split(' ');
+  if (words.length <= maxWords) return s;
+  return words.slice(0, maxWords).join(' ') + '…';
+}
+function _barChartOpts(color, total, fullLabels) {
+  return {indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        callbacks:{
+          title: items => fullLabels[items[0].dataIndex],
+          label: item => ` ${item.raw}  (${total ? Math.round(item.raw/total*100) : 0}%)`
+        }
+      },
+      datalabels:{
+        anchor:'end', align:'end', clamp:true,
+        color:'#5a6478', font:{size:11},
+        formatter: v => v
+      }
+    },
+    layout:{padding:{right:36}},
+    scales:{
+      x:{beginAtZero:true, ticks:{font:{size:11}},
+         title:{display:true, text:'Number of Alerts', color:'#5a6478', font:{size:11}}},
+      y:{ticks:{font:{size:11}, crossAlign:'far',
+           callback:(val,i) => _truncLabel(fullLabels[i], 4)},
+         title:{display:false}}
+    }
+  };
+}
+
 _charts.product = new Chart(document.getElementById('productChart'),{
   type:'bar',
   data:{
-    labels: DATA.breakdowns.product_category.labels,
+    labels: DATA.breakdowns.product_category.labels.map(l=>_truncLabel(l,4)),
     datasets:[{data:DATA.breakdowns.product_category.data,backgroundColor:'#3498db',label:'alerts'}]
   },
-  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},tooltip:pctTooltip(productTotal),datalabels:{display:false}},
-    scales:{
-      x:{beginAtZero:true, ticks:{font:{size:14}}, title:{display:true, text:'Number of Alerts', color:'#5a6478', font:{size:12}}},
-      y:{ticks:{font:{size:14},crossAlign:'far'}, title:{display:true, text:'Product Category', color:'#5a6478', font:{size:12}}}
-    }}
+  options: _barChartOpts('#3498db', productTotal, DATA.breakdowns.product_category.labels)
 });
 
 // Country bar
@@ -1966,12 +1993,7 @@ _charts.country = new Chart(document.getElementById('countryChart'),{
     labels: DATA.breakdowns.origin_country.labels,
     datasets:[{data:DATA.breakdowns.origin_country.data,backgroundColor:'#e67e22',label:'alerts'}]
   },
-  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},tooltip:pctTooltip(countryTotal),datalabels:{display:false}},
-    scales:{
-      x:{beginAtZero:true, ticks:{font:{size:14}}, title:{display:true, text:'Number of Alerts', color:'#5a6478', font:{size:12}}},
-      y:{ticks:{font:{size:14},crossAlign:'far'}, title:{display:true, text:'Country', color:'#5a6478', font:{size:12}}}
-    }}
+  options: _barChartOpts('#e67e22', countryTotal, DATA.breakdowns.origin_country.labels)
 });
 
 // Source doughnut
@@ -2051,16 +2073,22 @@ function _updateBreakdowns(filtered) {
   // Product bar
   if (_charts.product) {
     const pd = _topN(filtered, a => a.product_category, 10);
-    _charts.product.data.labels = pd.labels;
+    const pdTotal = pd.data.reduce((s,v)=>s+v,0);
+    _charts.product.data.labels = pd.labels.map(l=>_truncLabel(l,4));
     _charts.product.data.datasets[0].data = pd.data;
+    _charts.product.options.plugins.tooltip.callbacks.title = items => pd.labels[items[0].dataIndex];
+    _charts.product.options.plugins.tooltip.callbacks.label = item => ` ${item.raw}  (${pdTotal ? Math.round(item.raw/pdTotal*100) : 0}%)`;
+    _charts.product.options.scales.y.ticks.callback = (val,i) => _truncLabel(pd.labels[i]||'',4);
     _charts.product.update();
   }
 
   // Country bar
   if (_charts.country) {
     const cd = _topN(filtered, a => a.origin_country, 15);
+    const cdTotal = cd.data.reduce((s,v)=>s+v,0);
     _charts.country.data.labels = cd.labels;
     _charts.country.data.datasets[0].data = cd.data;
+    _charts.country.options.plugins.tooltip.callbacks.label = item => ` ${item.raw}  (${cdTotal ? Math.round(item.raw/cdTotal*100) : 0}%)`;
     _charts.country.update();
   }
 
