@@ -905,13 +905,16 @@ footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-t
         <!-- filled by JS -->
       </div>
     </div>
-    <!-- Country text search -->
-    <div>
-      <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Country</div>
-      <input class="ms-country-input" id="filter-country-input" type="text"
-             placeholder="Origin country…" list="country-datalist"
-             oninput="setCountryFilter(this.value)">
-      <datalist id="country-datalist"></datalist>
+    <!-- Country dropdown (options populated by JS) -->
+    <div class="ms-wrap" id="ms-wrap-country">
+      <button class="ms-btn" id="ms-btn-country" onclick="toggleMsPanel('country',event)">
+        <span id="ms-lbl-country">Country: All</span><span class="ms-arrow">▾</span>
+      </button>
+      <div class="ms-panel" id="msp-country">
+        <label class="ms-item"><input type="checkbox" id="ms-all-country" checked onchange="toggleMsAll('country',this)"> All</label>
+        <hr class="ms-sep">
+        <!-- filled by JS -->
+      </div>
     </div>
     <button id="clear-filters-btn" onclick="clearFilters()">× Clear all filters</button>
   </div>
@@ -1534,19 +1537,19 @@ const INITIAL_SHOW = 10;
 let _sortMode = 'score';
 const _feedAlerts = {};
 const _charts = {};
-const _filters = { hazard: new Set(), source: new Set(), product: new Set(), country: '' };
+const _filters = { hazard: new Set(), source: new Set(), product: new Set(), country: new Set() };
 
 function _passesFilters(a) {
   if (_filters.hazard.size && !_filters.hazard.has((a.hazard_category||'').toLowerCase())) return false;
   if (_filters.source.size && !_filters.source.has(a.source_id)) return false;
   if (_filters.product.size && !_filters.product.has((a.product_category||'').toLowerCase())) return false;
-  if (_filters.country) {
-    const q = _filters.country.toLowerCase();
+  if (_filters.country.size) {
     const origin = (a.origin_country||'').toLowerCase();
     const dist = (Array.isArray(a.distribution_countries)
       ? a.distribution_countries.join(' ')
       : String(a.distribution_countries||'')).toLowerCase();
-    if (!origin.includes(q) && !dist.includes(q)) return false;
+    const match = [..._filters.country].some(q => origin.includes(q) || dist.includes(q));
+    if (!match) return false;
   }
   return true;
 }
@@ -1599,21 +1602,14 @@ function _updateMsLabel(type) {
   }
 }
 
-function setCountryFilter(val) {
-  _filters.country = val.trim();
-  _applyAll();
-}
-
 function clearFilters() {
-  ['hazard','source','product'].forEach(t => {
+  ['hazard','source','product','country'].forEach(t => {
     _filters[t].clear();
     const allCb = document.getElementById('ms-all-'+t);
     if (allCb) allCb.checked = true;
     document.querySelectorAll(`#msp-${t} .ms-opt`).forEach(o => o.checked = false);
     _updateMsLabel(t);
   });
-  _filters.country = '';
-  document.getElementById('filter-country-input').value = '';
   _applyAll();
 }
 
@@ -1622,7 +1618,7 @@ document.addEventListener('click', () =>
   document.querySelectorAll('.ms-panel').forEach(p => p.classList.remove('open')));
 
 function _applyAll() {
-  const n = _filters.hazard.size + _filters.source.size + _filters.product.size + (_filters.country ? 1 : 0);
+  const n = _filters.hazard.size + _filters.source.size + _filters.product.size + _filters.country.size;
   const clearBtn = document.getElementById('clear-filters-btn');
   const badge    = document.getElementById('filter-badge');
   clearBtn.style.display = n ? 'block' : 'none';
@@ -1697,11 +1693,21 @@ function setSortBy(mode){
   // After all cards are in the DOM, handle deep-link hash navigation
   if (window.location.hash) openAlertFromHash();
 
-  // Populate country autocomplete datalist
+  // Populate country multi-select panel (sorted alphabetically)
   const _allFeedAlerts = [..._feedAlerts.critical, ..._feedAlerts.high, ..._feedAlerts.medium];
   const _countries = [...new Set(_allFeedAlerts.map(a => a.origin_country).filter(Boolean))].sort();
-  const _dl = document.getElementById('country-datalist');
-  _countries.forEach(c => { const o = document.createElement('option'); o.value = c; _dl.appendChild(o); });
+  const _countryPanel = document.getElementById('msp-country');
+  _countries.forEach(c => {
+    const lbl = document.createElement('label');
+    lbl.className = 'ms-item';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.className = 'ms-opt'; cb.dataset.t = 'country';
+    cb.value = c.toLowerCase();
+    cb.addEventListener('change', () => toggleMsOption('country', cb));
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(' ' + c));
+    _countryPanel.appendChild(lbl);
+  });
 
   // Populate product category multi-select panel (sorted by frequency)
   const _prodCounts = {};
