@@ -1,5 +1,5 @@
 {
-  "n_alerts": 448,
+  "n_alerts": 450,
   "analyses": [
     {
       "alert_id": "fsis::092-2019",
@@ -50174,6 +50174,230 @@
           "perturbed_score": 1.68587,
           "delta": -0.81474,
           "direction": "↓"
+        }
+      ]
+    },
+    {
+      "alert_id": "fda_enforcement::H-0942-2026",
+      "title": "Total Nutrition Inc — Class I — 1. TNVitamins Ultrapotent Complete Green Superfo",
+      "source_id": "fda_enforcement",
+      "hazard_specific": "",
+      "severity_raw": "Class I",
+      "original_score": 4.05288,
+      "original_percentile": null,
+      "top_driver": "severity→ClassIII",
+      "perturbations": [
+        {
+          "perturbation": "hazard→Listeria",
+          "perturbation_he": "סיכון→ליסטריה",
+          "field": "hazard_specific",
+          "new_value": "Listeria monocytogenes",
+          "original_score": 4.05288,
+          "perturbed_score": 4.19624,
+          "delta": 0.14336,
+          "direction": "↑"
+        },
+        {
+          "perturbation": "hazard→mineral_oil",
+          "perturbation_he": "סיכון→שמן מינרלי",
+          "field": "hazard_specific",
+          "new_value": "mineral oil MOSH/MOAH (chronic chemical)",
+          "original_score": 4.05288,
+          "perturbed_score": 1.75199,
+          "delta": -2.30089,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "hazard→allergen",
+          "perturbation_he": "סיכון→אלרגן",
+          "field": "hazard_specific",
+          "new_value": "undeclared allergen: peanuts, sesame",
+          "original_score": 4.05288,
+          "perturbed_score": 1.96481,
+          "delta": -2.08807,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "severity→ClassI",
+          "perturbation_he": "חומרה→Class I",
+          "field": "severity_raw",
+          "new_value": "Class I",
+          "original_score": 4.05288,
+          "perturbed_score": 4.05288,
+          "delta": 0.0,
+          "direction": "→"
+        },
+        {
+          "perturbation": "severity→ClassIII",
+          "perturbation_he": "חומרה→Class III",
+          "field": "severity_raw",
+          "new_value": "Class III",
+          "original_score": 4.05288,
+          "perturbed_score": -0.49236,
+          "delta": -4.54524,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "dist→nationwide",
+          "perturbation_he": "הפצה→ארצית",
+          "field": "distribution_countries",
+          "new_value": "[\"United States\"]",
+          "original_score": 4.05288,
+          "perturbed_score": 4.13068,
+          "delta": 0.0778,
+          "direction": "↑"
+        },
+        {
+          "perturbation": "dist→local_only",
+          "perturbation_he": "הפצה→מקומית",
+          "field": "distribution_countries",
+          "new_value": "[\"limited local area, single county\"]",
+          "original_score": 4.05288,
+          "perturbed_score": 3.41115,
+          "delta": -0.64173,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "dist→+Israel",
+          "perturbation_he": "הפצה→+ישראל",
+          "field": "_append_israel",
+          "new_value": null,
+          "original_score": 4.05288,
+          "perturbed_score": 2.9056,
+          "delta": -1.14728,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "rte→add_RTE",
+          "perturbation_he": "מוצר→RTE",
+          "field": "_prepend_desc",
+          "new_value": "Ready-to-eat product. ",
+          "original_score": 4.05288,
+          "perturbed_score": 2.41625,
+          "delta": -1.63663,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "rte→cooked",
+          "perturbation_he": "מוצר→בישול נדרש",
+          "field": "_prepend_desc",
+          "new_value": "Requires thorough cooking before consumption. ",
+          "original_score": 4.05288,
+          "perturbed_score": 3.03686,
+          "delta": -1.01602,
+          "direction": "↓"
+        }
+      ]
+    },
+    {
+      "alert_id": "fda_enforcement::H-0944-2026",
+      "title": "E & S Grocery & Bakery Inc. — Class I — Taro Cakes UPC CODE #652565100055",
+      "source_id": "fda_enforcement",
+      "hazard_specific": "",
+      "severity_raw": "Class I",
+      "original_score": 2.2255,
+      "original_percentile": null,
+      "top_driver": "severity→ClassIII",
+      "perturbations": [
+        {
+          "perturbation": "hazard→Listeria",
+          "perturbation_he": "סיכון→ליסטריה",
+          "field": "hazard_specific",
+          "new_value": "Listeria monocytogenes",
+          "original_score": 2.2255,
+          "perturbed_score": 3.45811,
+          "delta": 1.23261,
+          "direction": "↑"
+        },
+        {
+          "perturbation": "hazard→mineral_oil",
+          "perturbation_he": "סיכון→שמן מינרלי",
+          "field": "hazard_specific",
+          "new_value": "mineral oil MOSH/MOAH (chronic chemical)",
+          "original_score": 2.2255,
+          "perturbed_score": 1.79836,
+          "delta": -0.42714,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "hazard→allergen",
+          "perturbation_he": "סיכון→אלרגן",
+          "field": "hazard_specific",
+          "new_value": "undeclared allergen: peanuts, sesame",
+          "original_score": 2.2255,
+          "perturbed_score": 1.95836,
+          "delta": -0.26714,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "severity→ClassI",
+          "perturbation_he": "חומרה→Class I",
+          "field": "severity_raw",
+          "new_value": "Class I",
+          "original_score": 2.2255,
+          "perturbed_score": 2.22549,
+          "delta": -1e-05,
+          "direction": "→"
+        },
+        {
+          "perturbation": "severity→ClassIII",
+          "perturbation_he": "חומרה→Class III",
+          "field": "severity_raw",
+          "new_value": "Class III",
+          "original_score": 2.2255,
+          "perturbed_score": -2.56654,
+          "delta": -4.79204,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "dist→nationwide",
+          "perturbation_he": "הפצה→ארצית",
+          "field": "distribution_countries",
+          "new_value": "[\"United States\"]",
+          "original_score": 2.2255,
+          "perturbed_score": 1.10249,
+          "delta": -1.12301,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "dist→local_only",
+          "perturbation_he": "הפצה→מקומית",
+          "field": "distribution_countries",
+          "new_value": "[\"limited local area, single county\"]",
+          "original_score": 2.2255,
+          "perturbed_score": 0.16023,
+          "delta": -2.06527,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "dist→+Israel",
+          "perturbation_he": "הפצה→+ישראל",
+          "field": "_append_israel",
+          "new_value": null,
+          "original_score": 2.2255,
+          "perturbed_score": 2.0552,
+          "delta": -0.1703,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "rte→add_RTE",
+          "perturbation_he": "מוצר→RTE",
+          "field": "_prepend_desc",
+          "new_value": "Ready-to-eat product. ",
+          "original_score": 2.2255,
+          "perturbed_score": 2.15644,
+          "delta": -0.06906,
+          "direction": "↓"
+        },
+        {
+          "perturbation": "rte→cooked",
+          "perturbation_he": "מוצר→בישול נדרש",
+          "field": "_prepend_desc",
+          "new_value": "Requires thorough cooking before consumption. ",
+          "original_score": 2.2255,
+          "perturbed_score": 2.78143,
+          "delta": 0.55593,
+          "direction": "↑"
         }
       ]
     }
