@@ -27,6 +27,7 @@ from src import db
 from scripts.generate_dashboard import _absolute_score
 
 SCORE_THRESHOLD = 8.5
+NOTIFY_SINCE = "2026-06-28"  # no emails for alerts ingested before this date
 RECIPIENTS = [
     "matan.shiner@moh.gov.il",
 ]
@@ -178,6 +179,10 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true",
                         help="Print what would be sent without actually sending")
     args = parser.parse_args()
+
+    if args.date < NOTIFY_SINCE:
+        print(f"Date {args.date} is before NOTIFY_SINCE ({NOTIFY_SINCE}) — skipping.")
+        sys.exit(0)
 
     api_key = os.environ.get("RESEND_API_KEY", "")
     if not api_key and not args.dry_run:
