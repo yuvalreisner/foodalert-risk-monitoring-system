@@ -43,7 +43,7 @@ def fetch_todays_alerts(conn, ref_date: str) -> list[dict]:
                a.israel_relevance_flag, a.record_url,
                s.bi_encoder_score
         FROM alerts a JOIN alert_scores s ON s.alert_id = a.id
-        WHERE a.source_published_date = ?
+        WHERE date(a.ingestion_date) = ?
         ORDER BY s.bi_encoder_score DESC
         """,
         (ref_date,),
