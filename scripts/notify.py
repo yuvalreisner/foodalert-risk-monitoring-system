@@ -29,7 +29,7 @@ from scripts.generate_dashboard import _absolute_score
 SCORE_THRESHOLD = 8.5
 NOTIFY_SINCE = "2026-06-28"  # no emails for alerts ingested before this date
 RECIPIENTS = [
-    "matan.shiner@moh.gov.il",
+    "yuvalreisner96@gmail.com",  # TODO: switch to matan.shiner@moh.gov.il after domain verification
 ]
 SENDER = "FoodSafe Alerts <onboarding@resend.dev>"
 RESEND_API_URL = "https://api.resend.com/emails"
@@ -45,9 +45,10 @@ def fetch_todays_alerts(conn, ref_date: str) -> list[dict]:
                s.bi_encoder_score
         FROM alerts a JOIN alert_scores s ON s.alert_id = a.id
         WHERE date(a.ingestion_date) = ?
+          AND a.source_published_date >= ?
         ORDER BY s.bi_encoder_score DESC
         """,
-        (ref_date,),
+        (ref_date, NOTIFY_SINCE),
     ).fetchall()
     return [dict(r) for r in rows]
 
